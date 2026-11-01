@@ -31,7 +31,7 @@ has_user_content() {  # non-blank lines outside the ledger block, or unmatched m
 stage_clean() {
   local f="$1" filter="$2" mode sha
   git cat-file -e "HEAD:$f" 2>/dev/null || return 1
-  git show "HEAD:$f" | grep -qF -e '<!-- ai-ledger:start' -e '.githooks/* text eol=lf' || return 1
+  git show "HEAD:$f" | grep -qF -e '<!-- ai-ledger:start' -e 'hook scripts must keep LF line endings' || return 1
   [ "$(git show "HEAD:$f" | grep -c '<!-- ai-ledger:start')" = "$(git show "HEAD:$f" | grep -c '<!-- ai-ledger:end -->')" ] || return 1
   if [ -z "$(git show "HEAD:$f" | awk "$filter" | tr -d '[:space:]')" ]; then
     git rm --cached -q -- "$f"
@@ -55,7 +55,7 @@ if [ "$MODE" = local ]; then
   # Everything that belongs to the ledger (never the user's own files).
   PATHS=(.ai_ledger .cursor/rules/ai-ledger.mdc .windsurf/rules/ai-ledger.md)
   for h in pre-commit pre-push post-commit; do
-    if grep -qsF ".ai_ledger" ".githooks/$h"; then PATHS+=(".githooks/$h"); fi
+    if grep -qsE '^# AI [A-Za-z ]*Ledger:' ".githooks/$h"; then PATHS+=(".githooks/$h"); fi
   done
   for f in "${TOOL_FILES[@]}"; do
     if [ -f "$f" ] && ! has_user_content "$f"; then PATHS+=("$f"); fi
@@ -65,7 +65,7 @@ if [ "$MODE" = local ]; then
     echo "# ai-ledger:end"; } >> "$EXCLUDE"
 
   # Remove the ledger's lines from the shared .gitattributes (left by shared mode).
-  if grep -qsF ".githooks/* text eol=lf" .gitattributes; then
+  if grep -qs "hook scripts must keep LF line endings" .gitattributes; then   # our comment line
     awk "$STRIP_GA" .gitattributes > .gitattributes.tmp
     if grep -q '[^[:space:]]' .gitattributes.tmp; then cat .gitattributes.tmp > .gitattributes; else rm -f .gitattributes; fi
     rm -f .gitattributes.tmp
