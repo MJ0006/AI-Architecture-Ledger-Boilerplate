@@ -3,7 +3,7 @@
 #
 # Usage:
 #   ./install.sh [--local | --shared] [--update] [path/to/your/project]   # from a clone of this repo
-#   curl -fsSL https://raw.githubusercontent.com/MJ0006/AI-Architecture-Ledger/main/install.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/MJ0006/AI-Architecture-Ledger-Boilerplate/main/install.sh | bash
 #
 # Mode (default: auto): ledger files are pushed with your code ONLY if 'origin' is a
 # confirmed private GitHub/GitLab repo; otherwise they stay on this computer.
@@ -11,7 +11,7 @@
 # boilerplate's own files (hooks, scripts, rules) and never touches your ledger entries.
 set -euo pipefail
 
-REPO_URL="https://github.com/MJ0006/AI-Architecture-Ledger.git"
+REPO_URL="https://github.com/MJ0006/AI-Architecture-Ledger-Boilerplate.git"
 MODE=auto
 UPDATE=0
 TARGET_ARG=.
