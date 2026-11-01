@@ -124,9 +124,9 @@ your-project/
 
 | File | Read automatically by |
 |---|---|
-| `AGENTS.md` | OpenAI Codex, OpenCode, Cursor, GitHub Copilot agent, Windsurf, Zed, Jules, and other tools that follow the AGENTS.md convention |
+| `AGENTS.md` | OpenAI Codex, OpenCode, Cursor, GitHub Copilot agent, Google Antigravity (IDE and CLI), Windsurf, Zed, Jules, and other tools that follow the AGENTS.md convention |
 | `CLAUDE.md` | Claude Code (CLI, VS Code, JetBrains, desktop, web) |
-| `GEMINI.md` | Gemini CLI, Gemini Code Assist |
+| `GEMINI.md` | Gemini CLI, Gemini Code Assist, Google Antigravity |
 | `.github/copilot-instructions.md` | GitHub Copilot in VS Code, JetBrains, Visual Studio |
 | `.cursor/rules/ai-ledger.mdc` | Cursor (`alwaysApply: true`) |
 | `.windsurf/rules/ai-ledger.md` | Windsurf (`trigger: always_on`) |
