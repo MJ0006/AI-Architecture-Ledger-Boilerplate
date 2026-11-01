@@ -1,0 +1,57 @@
+#!/usr/bin/env bash
+# AI Architecture Ledger: pre-commit enforcement.
+# Blocks commits that change code without adding a complete entry to the ledger.
+# Required headings must match .ai_ledger/agent_directives.md.
+
+ROOT=$(git rev-parse --show-toplevel) || exit 1
+cd "$ROOT" || exit 1
+LEDGER=".ai_ledger/evolution_log.md"
+REQUIRED_HEADINGS=("Request" "Changes" "Request vs Result" "Justification" "Alternatives" "Concepts" "How to Verify")
+
+# Merge commits only resolve existing work, so they don't need a new entry.
+if git rev-parse -q --verify MERGE_HEAD >/dev/null; then
+  exit 0
+fi
+
+# Only ledger files staged (e.g. archiving)? Nothing to enforce.
+CODE_FILES=$(git diff --cached --name-only | grep -v '^\.ai_ledger/')
+if [ -z "$CODE_FILES" ]; then
+  exit 0
+fi
+
+fail() {
+  echo "================================================================"
+  echo "GIT COMMIT BLOCKED: AI ARCHITECTURE LEDGER COMPLIANCE FAILURE"
+  echo "================================================================"
+  echo "Reason: $1"
+  echo ""
+  echo "Append one new entry to the END of $LEDGER using the format in"
+  echo ".ai_ledger/agent_directives.md, stage it (git add $LEDGER), and commit again."
+  echo "Each new entry needs a '## [YYYY-MM-DD HH:MM] Name' header and these headings:"
+  for h in "${REQUIRED_HEADINGS[@]}"; do echo "  ### $h"; done
+  echo "================================================================"
+  exit 1
+}
+
+[ -f "$LEDGER" ] || fail "The ledger file $LEDGER is missing."
+
+# Lines added to the ledger in this commit.
+ADDED=$(git diff --cached --no-color --unified=0 -- "$LEDGER" | grep '^+' | grep -v '^+++' | cut -c2-)
+[ -n "$ADDED" ] || fail "Code changes are staged, but no ledger entry was added."
+
+echo "$ADDED" | grep -qE '^## \[[0-9]{4}-[0-9]{2}-[0-9]{2}' \
+  || fail "The ledger change has no new entry header like '## [2026-01-31 14:05] Feature Name'."
+
+MISSING=""
+for h in "${REQUIRED_HEADINGS[@]}"; do
+  echo "$ADDED" | grep -qE "^### ${h}[[:space:]]*$" || MISSING="$MISSING '### $h'"
+done
+[ -z "$MISSING" ] || fail "The new ledger entry is missing:$MISSING"
+
+# Soft check: warn (don't block) about staged files the new entry never mentions.
+while IFS= read -r f; do
+  case "$f" in "$LEDGER") continue ;; esac
+  echo "$ADDED" | grep -qF "$f" || echo "Ledger warning: '$f' is staged but not mentioned in the new entry."
+done <<< "$CODE_FILES"
+
+exit 0
