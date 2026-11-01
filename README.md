@@ -1,6 +1,6 @@
 # AI Ledger
 
-A drop-in boilerplate that makes **any AI coding tool** document every change it makes:
+A drop-in kit that makes **any AI coding tool** document every change it makes:
 **what you asked**, **what it actually did**, **why**, **what else it could have done**, and
 **how to check it**. A Git hook enforces the rule, so no tool or person can skip it.
 The ledger stays on your computer unless your repository is **confirmed private** (see [Privacy](#privacy-what-gets-uploaded)).
@@ -305,7 +305,7 @@ and tells the user how to switch the checks on.
 
 ## Updating
 
-When this boilerplate gets fixes, get the latest version, then update your project:
+When AI Ledger gets fixes, get the latest version, then update your project:
 
 ```bash
 git -C ai-ledger pull

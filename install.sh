@@ -7,8 +7,8 @@
 #
 # Mode (default: auto): ledger files are pushed with your code ONLY if 'origin' is a
 # confirmed private GitHub/GitLab repo; otherwise they stay on this computer.
-# Safe to re-run: existing files are never overwritten, except with --update, which refreshes the
-# boilerplate's own files (hooks, scripts, rules) and never touches your ledger entries.
+# Safe to re-run: existing files are never overwritten, except with --update, which refreshes
+# AI Ledger's own files (hooks, scripts, rules) and never touches your ledger entries.
 set -euo pipefail
 
 REPO_URL="https://github.com/MJ0006/ai-ledger.git"
@@ -69,7 +69,7 @@ DATE=$(date '+%Y-%m-%d %H:%M')
 (cd "$TEMPLATE" && find . -type f | sed 's|^\./||') | while IFS= read -r rel; do
   dest="$TARGET/$rel"
   if [ -e "$dest" ]; then
-    # --update: refresh the boilerplate's own files. The user's records (logs, handoff) are never replaced.
+    # --update: refresh AI Ledger's own files. The user's records (logs, handoff) are never replaced.
     case "$rel" in .ai_ledger/evolution_log.md|.ai_ledger/analysis_log.md|.ai_ledger/handoff.md) USER_DATA=1 ;; *) USER_DATA=0 ;; esac
     if [ "$UPDATE" = 1 ] && [ "$USER_DATA" = 0 ] && ! cmp -s "$TEMPLATE/$rel" "$dest" \
        && { [ "${rel#.githooks/}" = "$rel" ] || grep -q "AI Architecture Ledger" "$dest"; }; then
