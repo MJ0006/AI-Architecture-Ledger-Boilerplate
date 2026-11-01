@@ -1,0 +1,4 @@
+# GitHub Pages site settings (https://mj0006.github.io/AI-Architecture-Ledger-Boilerplate/)
+theme: jekyll-theme-primer
+title: AI Architecture Ledger
+description: Make any AI coding tool log what you asked, what it assumed, what it did, and how to verify it.
