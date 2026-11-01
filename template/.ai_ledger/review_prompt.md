@@ -5,8 +5,8 @@ Use this before a new sprint or feature. Paste it into your AI tool, or say
 
 ---
 
-Read `.ai_ledger/evolution_log.md` (and any `.ai_ledger/archive/*.md` files relevant to the
-upcoming work). Do not change any code. Produce a report with these sections:
+Read `.ai_ledger/evolution_log.md`, `.ai_ledger/analysis_log.md`, and `.ai_ledger/handoff.md` (and any
+`.ai_ledger/archive/` files relevant to the upcoming work). Do not change any code. Produce a report with these sections:
 
 1. **Request vs Result mismatches:** list every entry where the result differed from the request.
    Group them by cause (unclear request, wrong assumption, missing context, technical limit, agent error). For each

@@ -49,6 +49,9 @@ curl -fsSL https://raw.githubusercontent.com/MJ0006/AI-Architecture-Ledger-Boile
 irm https://raw.githubusercontent.com/MJ0006/AI-Architecture-Ledger-Boilerplate/main/install.ps1 | iex
 ```
 
+> **After installing, start a new conversation in your AI tool (or reload it).** AI tools read their
+> rules when a conversation starts, so a chat that was already open won't know about the ledger.
+
 Add `--local` to force local-only mode, or `--shared` to require a private repository (for example
 `./install.sh --local path/to/project`). With the one-liner, use `| bash -s -- --local`.
 
@@ -98,7 +101,9 @@ bash .ai_ledger/scripts/set-mode.sh shared   # share with the team: refused unle
 your-project/
 ├── .ai_ledger/
 │   ├── agent_directives.md   ← master rules (single source of truth; edit here)
-│   ├── evolution_log.md      ← the ledger: append-only, one entry per task
+│   ├── evolution_log.md      ← the ledger: append-only, one entry per code change
+│   ├── analysis_log.md       ← audits, reviews, status checks, plans (no code changed)
+│   ├── handoff.md            ← where the work stands; rewritten when you say "handoff"
 │   ├── review_prompt.md      ← prompt for the pre-sprint review loop
 │   ├── last_review           ← time of the last review (drives the reminder)
 │   ├── scripts/
@@ -107,7 +112,7 @@ your-project/
 │   │   ├── visibility.sh     ← asks GitHub/GitLab whether the repo is private
 │   │   ├── check-setup.sh    ← checks the hooks are active on this computer
 │   │   └── archive.sh        ← moves last month's entries to archive/
-│   └── archive/YYYY-MM.md    ← created by the archive script
+│   └── archive/              ← older months: YYYY-MM.md and analysis/YYYY-MM.md
 ├── .githooks/
 │   ├── pre-commit            ← blocks commits without a complete ledger entry
 │   ├── pre-push              ← keeps the ledger out of public repositories
@@ -204,6 +209,21 @@ The hook requires the `## [YYYY-MM-DD ...]` header and all eight `###` headings.
 
 ---
 
+## Audits, reviews, and handoffs
+
+Not every request changes code. Two more files cover the rest:
+
+- **`analysis_log.md`**: when you ask for an audit (UI/UX, security, performance), a code review, an
+  investigation, a status check, or a plan, the AI records it here: Request, Assumptions, **Findings**,
+  Request vs Result, and **Recommended next steps**. Quick questions are not recorded.
+- **`handoff.md`**: when you say **"handoff"**, **"close the chat"**, or **"completed"**, the AI rewrites
+  this file with your goal, what you asked, decisions made, what's done, open questions, and next steps.
+  Every new conversation reads it first, so you can switch chats, AI tools, or computers without losing
+  the thread. (Just closing the window doesn't trigger it: the AI only acts when you send a message.)
+
+The commit hook can only enforce code entries. These two rely on the AI following its rules, so if one
+is missing, ask the AI to add it.
+
 ## Learning from the ledger
 
 - **Read Request vs Result first.** It is the quickest way to see whether the AI did what you asked.
@@ -230,7 +250,8 @@ At the start of a new month, the AI is instructed to run the archive script, or 
 bash .ai_ledger/scripts/archive.sh      # Windows: run in Git Bash
 ```
 
-The script moves entries from earlier months into `.ai_ledger/archive/YYYY-MM.md`. Commits that touch only ledger files are never blocked.
+The script moves entries from earlier months into `.ai_ledger/archive/YYYY-MM.md` (code changes) and
+`.ai_ledger/archive/analysis/YYYY-MM.md` (analysis entries). Commits that touch only ledger files are never blocked.
 
 ## The self-improving loop
 
@@ -268,6 +289,8 @@ and tells the user how to switch the checks on.
 
 | Problem | Fix |
 |---|---|
+| The AI doesn't write entries right after installing | Start a new conversation (or reload the AI tool). Rules are read when a conversation starts. |
+| An audit or review wasn't recorded | Only the code ledger is enforced by the hook. Ask the AI to add the entry to `analysis_log.md`. |
 | Hooks don't run | Run `bash .ai_ledger/scripts/check-setup.sh`. It says exactly what's wrong. On macOS/Linux, `chmod +x .githooks/*` fixes permissions. |
 | `bash\r: No such file or directory` | The ledger hooks have Windows line endings. Delete them with `rm .githooks/pre-commit .githooks/pre-push .githooks/post-commit`, then run `git checkout -- .githooks` (shared mode) or re-run the installer (local mode). |
 | `git commit --amend` is blocked | Amending changes code, so it needs an entry too. Add a short entry (e.g. "Add missing file to previous commit"), or use `--no-verify` if the change is already logged. |

@@ -20,7 +20,7 @@ asked. Then read **Concepts** to learn the techniques it used, and **How to Veri
 None.
 
 ### Changes
-- Added `.ai_ledger/` with the rules, this log, a review prompt, and an archive script.
+- Added `.ai_ledger/` with the rules, this log, an analysis log, a handoff note, a review prompt, and an archive script.
 - Added `.githooks/` hooks: `pre-commit` blocks code commits that have no complete ledger entry,
   and `pre-push` keeps ledger files out of public repositories.
 - Added (or appended to) the instruction files each AI tool reads automatically.
