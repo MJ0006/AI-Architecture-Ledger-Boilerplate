@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# End-to-end tests for the AI Architecture Ledger boilerplate.
+# End-to-end tests for AI Ledger.
 # Each test installs into a throwaway git repo and checks real git behaviour.
 # GitHub/GitLab answers are simulated with a stub `curl` (FAKE_VIS=public|private|offline);
 # the real API check runs separately in CI.

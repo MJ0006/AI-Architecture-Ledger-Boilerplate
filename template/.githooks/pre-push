@@ -7,7 +7,7 @@ MODE=$(git config --get ailedger.mode || echo shared)
 
 block() {
   echo "================================================================"
-  echo "GIT PUSH BLOCKED: AI ARCHITECTURE LEDGER PRIVACY PROTECTION"
+  echo "GIT PUSH BLOCKED: AI LEDGER PRIVACY PROTECTION"
   echo "================================================================"
   printf '%s\n' "$@"
   echo "================================================================"

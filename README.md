@@ -1,4 +1,4 @@
-# AI Architecture Ledger
+# AI Ledger
 
 A drop-in boilerplate that makes **any AI coding tool** document every change it makes:
 **what you asked**, **what it actually did**, **why**, **what else it could have done**, and
@@ -31,22 +31,22 @@ Works with **existing projects** and **new ones**. For a new project, create its
 
 **macOS / Linux**
 ```bash
-git clone https://github.com/MJ0006/AI-Architecture-Ledger-Boilerplate.git
-./AI-Architecture-Ledger-Boilerplate/install.sh path/to/your/project
+git clone https://github.com/MJ0006/ai-ledger.git
+./ai-ledger/install.sh path/to/your/project
 ```
 
 **Windows (PowerShell)**
 ```powershell
-git clone https://github.com/MJ0006/AI-Architecture-Ledger-Boilerplate.git
-.\AI-Architecture-Ledger-Boilerplate\install.ps1 path\to\your\project
+git clone https://github.com/MJ0006/ai-ledger.git
+.\ai-ledger\install.ps1 path\to\your\project
 ```
 
 **One-liners** (run inside your project folder)
 ```bash
-curl -fsSL https://raw.githubusercontent.com/MJ0006/AI-Architecture-Ledger-Boilerplate/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/MJ0006/ai-ledger/main/install.sh | bash
 ```
 ```powershell
-irm https://raw.githubusercontent.com/MJ0006/AI-Architecture-Ledger-Boilerplate/main/install.ps1 | iex
+irm https://raw.githubusercontent.com/MJ0006/ai-ledger/main/install.ps1 | iex
 ```
 
 > **After installing, start a new conversation in your AI tool (or reload it).** AI tools read their
@@ -308,11 +308,11 @@ and tells the user how to switch the checks on.
 When this boilerplate gets fixes, get the latest version, then update your project:
 
 ```bash
-git -C AI-Architecture-Ledger-Boilerplate pull
-./AI-Architecture-Ledger-Boilerplate/install.sh --update path/to/your/project
+git -C ai-ledger pull
+./ai-ledger/install.sh --update path/to/your/project
 ```
 
-Or, inside your project: `curl -fsSL https://raw.githubusercontent.com/MJ0006/AI-Architecture-Ledger-Boilerplate/main/install.sh | bash -s -- --update`
+Or, inside your project: `curl -fsSL https://raw.githubusercontent.com/MJ0006/ai-ledger/main/install.sh | bash -s -- --update`
 
 It refreshes the hooks, scripts, and rules, keeps your current mode, and **never touches your ledger
 entries**. If the rules changed, your previous rules file is saved as `.ai_ledger/agent_directives.md.old`.

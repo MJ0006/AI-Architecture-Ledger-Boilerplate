@@ -29,7 +29,7 @@ fi
 
 fail() {
   echo "================================================================"
-  echo "GIT COMMIT BLOCKED: AI ARCHITECTURE LEDGER COMPLIANCE FAILURE"
+  echo "GIT COMMIT BLOCKED: AI LEDGER COMPLIANCE FAILURE"
   echo "================================================================"
   echo "Reason: $1"
   echo ""

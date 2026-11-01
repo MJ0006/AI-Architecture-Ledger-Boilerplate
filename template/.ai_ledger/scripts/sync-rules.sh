@@ -66,5 +66,5 @@ upsert "AGENTS.md"                         # Codex, OpenCode, Cursor, Copilot ag
 upsert "CLAUDE.md"                         # Claude Code
 upsert "GEMINI.md"                         # Gemini CLI / Gemini Code Assist
 upsert ".github/copilot-instructions.md"   # GitHub Copilot (VS Code, JetBrains, Visual Studio)
-upsert ".cursor/rules/ai-ledger.mdc"  "---\ndescription: AI Architecture Ledger rules\nalwaysApply: true\n---\n"
+upsert ".cursor/rules/ai-ledger.mdc"  "---\ndescription: AI Ledger rules\nalwaysApply: true\n---\n"
 upsert ".windsurf/rules/ai-ledger.md" "---\ntrigger: always_on\n---\n"

@@ -9,12 +9,12 @@ asked. Then read **Concepts** to learn the techniques it used, and **How to Veri
 
 ---
 
-## [{{DATE}}] AI Architecture Ledger installed
+## [{{DATE}}] AI Ledger installed
 - **Area:** `/` (repository root)
 - **Files:** `.ai_ledger/`, `.githooks/pre-commit`, `.githooks/pre-push`, `.githooks/post-commit`, `.gitattributes`, `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, `.github/copilot-instructions.md`, `.cursor/rules/ai-ledger.mdc`, `.windsurf/rules/ai-ledger.md`
 
 ### Request
-> Install the AI Architecture Ledger boilerplate.
+> Install the AI Ledger.
 
 ### Assumptions
 None.

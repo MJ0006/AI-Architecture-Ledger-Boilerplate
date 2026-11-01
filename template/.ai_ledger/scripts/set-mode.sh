@@ -148,7 +148,7 @@ internal details). The pre-push hook re-checks on every push and blocks it if th
 repository has become public. Before making it public, run:
     bash .ai_ledger/scripts/set-mode.sh local
 ================================================================================
-Next: commit the ledger files, e.g.  git add -A && git commit -m "Add AI Architecture Ledger"
+Next: commit the ledger files, e.g.  git add -A && git commit -m "Add AI Ledger"
 Teammates: after cloning, run  git config core.hooksPath .githooks
 EOF
 fi

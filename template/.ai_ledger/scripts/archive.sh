@@ -39,5 +39,5 @@ archive() {
 }
 
 [ -f "$ROOT/.ai_ledger/evolution_log.md" ] || { echo "Ledger not found: $ROOT/.ai_ledger/evolution_log.md" >&2; exit 1; }
-archive "$ROOT/.ai_ledger/evolution_log.md" "$ROOT/.ai_ledger/archive"          "Architecture Ledger Archive"
+archive "$ROOT/.ai_ledger/evolution_log.md" "$ROOT/.ai_ledger/archive"          "AI Ledger Archive"
 archive "$ROOT/.ai_ledger/analysis_log.md"  "$ROOT/.ai_ledger/archive/analysis" "Analysis Log Archive"
