@@ -4,14 +4,14 @@
 #
 # Usage:
 #   .\install.ps1 [--local | --shared] [path\to\your\project]
-#   irm https://raw.githubusercontent.com/MJ0006/AI-Architecture-Ledger/main/install.ps1 | iex
+#   irm https://raw.githubusercontent.com/MJ0006/AI-Architecture-Ledger-Boilerplate/main/install.ps1 | iex
 #
 # Everything runs inside a script block, so settings don't leak into your session when piped to iex.
 & {
     $ErrorActionPreference = "Stop"
     $Mode = @($args | Where-Object { $_ -in @("--local", "--shared") })
     $Target = @($args | Where-Object { $_ -notlike "--*" }) + "." | Select-Object -First 1
-    $RepoUrl = "https://github.com/MJ0006/AI-Architecture-Ledger.git"
+    $RepoUrl = "https://github.com/MJ0006/AI-Architecture-Ledger-Boilerplate.git"
 
     if (-not (Get-Command git -ErrorAction SilentlyContinue)) {
         throw "Git is required. Install it from https://git-scm.com/download/win and re-run."
