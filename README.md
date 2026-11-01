@@ -96,6 +96,7 @@ your-project/
 │   ├── agent_directives.md   ← master rules (single source of truth; edit here)
 │   ├── evolution_log.md      ← the ledger: append-only, one entry per task
 │   ├── review_prompt.md      ← prompt for the pre-sprint review loop
+│   ├── last_review           ← time of the last review (drives the reminder)
 │   ├── scripts/
 │   │   ├── set-mode.sh       ← switch between local and shared mode
 │   │   ├── sync-rules.sh     ← copy agent_directives.md into every AI tool's file
@@ -105,7 +106,7 @@ your-project/
 ├── .githooks/
 │   ├── pre-commit            ← blocks commits without a complete ledger entry
 │   ├── pre-push              ← keeps the ledger out of public repositories
-│   └── post-commit           ← (local mode) remembers the entry count at each commit
+│   └── post-commit           ← shows the latest Request vs Result and the review reminder
 ├── AGENTS.md                         ┐
 ├── CLAUDE.md                         │
 ├── GEMINI.md                         │ rules copied from agent_directives.md
@@ -139,6 +140,21 @@ instructions. The Git hook enforces the rules regardless of which tool wrote the
 4. When you (or the AI) run `git commit`, the hook checks that code changes come with a **new,
    complete** entry. If they don't, the commit is blocked with a message that tells you (or the AI) exactly what's missing.
    In local mode, the entry is written but never staged, and the hook checks the file on disk.
+5. After the commit, the terminal shows the newest entry's **Request vs Result**, so you see what the AI
+   did without opening the ledger:
+
+   ```
+   ---------------- AI Ledger: latest entry ----------------
+   [2026-11-01 14:05] Login rate limiter
+   Request vs Result:
+     Differs: also added a Retry-After header (not requested).
+   Full entry: .ai_ledger/evolution_log.md
+   ----------------------------------------------------------
+   ```
+
+**You don't have to remember the ledger.** Your AI tool loads the rules automatically, the hooks block
+commits that are missing entries, the post-commit summary shows you each result, and the AI warns you if the
+hooks are switched off on your computer.
 
 ### Entry format
 
@@ -216,6 +232,10 @@ Before a new sprint or feature, tell your AI:
 - Concepts worth studying
 - Suggested rule updates for `agent_directives.md`. It only proposes them; you decide.
 
+You don't need to remember to do this. After a commit, if your last review was **14 or more days ago**, the terminal
+reminds you. Finishing the review resets the timer (the prompt runs `date +%s > .ai_ledger/last_review`).
+Change the interval with `git config ailedger.reviewDays 7`, or turn the reminder off with `0`.
+
 ---
 
 ## Teammates and fresh clones
@@ -223,6 +243,9 @@ Before a new sprint or feature, tell your AI:
 - **Shared mode:** the ledger is in the repo. `core.hooksPath` is a local Git setting and isn't
   cloned, so after cloning, each person runs `git config core.hooksPath .githooks`.
 - **Local mode:** nothing is in the repo, so each person runs the installer and keeps their own ledger.
+
+If someone forgets, the AI notices: before each task it checks `git config core.hooksPath` and tells the
+user how to switch the checks on.
 
 ## Customizing
 

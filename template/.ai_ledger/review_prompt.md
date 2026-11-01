@@ -19,3 +19,6 @@ upcoming work). Do not change any code. Produce a report with these sections:
    have prevented the issues above. Propose them only. Do not edit the file.
 
 Keep each section to short bullets that cite entry dates.
+
+When the report is done, reset the review reminder by running `date +%s > .ai_ledger/last_review`
+(or tell the user to run it if you cannot run commands).
