@@ -1,0 +1,77 @@
+name: test
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  # Full end-to-end suite (simulated GitHub/GitLab answers) on every OS.
+  suite:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v5
+      - name: Use macOS's built-in bash 3.2 (what Mac users have)
+        if: runner.os == 'macOS'
+        run: |
+          mkdir -p "$RUNNER_TEMP/oldbash" && ln -s /bin/bash "$RUNNER_TEMP/oldbash/bash"
+          echo "$RUNNER_TEMP/oldbash" >> "$GITHUB_PATH"
+      - run: git config --global user.name ci && git config --global user.email ci@example.com
+      - run: bash --version | head -1 && bash tests/run.sh
+
+  # The real Windows installer, in PowerShell 7 and Windows PowerShell 5.1.
+  windows-installer:
+    strategy:
+      fail-fast: false
+      matrix:
+        shell: [pwsh, powershell]
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: ${{ matrix.shell }}
+    steps:
+      - uses: actions/checkout@v5
+      - name: Install into a new project with install.ps1
+        run: |
+          $proj = Join-Path $env:RUNNER_TEMP "proj"
+          git init -q $proj
+          .\install.ps1 --local $proj
+          if ($LASTEXITCODE -ne 0) { throw "install.ps1 failed" }
+          foreach ($f in ".ai_ledger\evolution_log.md", ".githooks\pre-commit", "CLAUDE.md", "AGENTS.md") {
+            if (-not (Test-Path (Join-Path $proj $f))) { throw "missing $f" }
+          }
+          if ((git -C $proj config core.hooksPath) -ne ".githooks") { throw "hooks not activated" }
+          if ((git -C $proj config ailedger.mode) -ne "local") { throw "mode is not local" }
+      - name: The hook blocks a commit without a ledger entry
+        run: |
+          $proj = Join-Path $env:RUNNER_TEMP "proj"
+          Set-Location $proj
+          git config user.name ci; git config user.email ci@example.com
+          "x" | Out-File app.txt; git add app.txt
+          git commit -q -m "no entry"
+          if ($LASTEXITCODE -eq 0) { throw "commit should have been blocked" }
+          exit 0   # the blocked commit above is the expected result
+
+  # The real, anonymous GitHub/GitLab API (no simulation).
+  visibility:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Check real public and private/missing repos
+        run: |
+          check() {
+            got=$(bash template/.ai_ledger/scripts/visibility.sh "$1")
+            echo "$1 -> $got (expected $2)"
+            [ "$got" = "$2" ] || { [ "$got" = unknown ] && echo "::warning::API unavailable or rate-limited"; [ "$got" = unknown ]; }
+          }
+          check https://github.com/git/git.git public
+          check git@github.com:git/git.git public
+          check https://github.com/MJ0006/this-repo-does-not-exist-xyz private
+          check https://gitlab.com/gitlab-org/gitlab.git public
+          check https://bitbucket.org/atlassian/python-bitbucket unknown

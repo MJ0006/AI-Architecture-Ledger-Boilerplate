@@ -1,0 +1,76 @@
+#!/usr/bin/env bash
+# AI Architecture Ledger: keeps ledger files out of public repositories.
+# Git passes $1 = remote name, $2 = remote URL, and the refs being pushed on stdin.
+REMOTE_URL="$2"
+cd "$(git rev-parse --show-toplevel)" || exit 1
+MODE=$(git config --get ailedger.mode || echo shared)
+
+block() {
+  echo "================================================================"
+  echo "GIT PUSH BLOCKED: AI ARCHITECTURE LEDGER PRIVACY PROTECTION"
+  echo "================================================================"
+  printf '%s\n' "$@"
+  echo "================================================================"
+  exit 1
+}
+
+has_ledger() { [ -n "$(git ls-tree --name-only "$1" -- .ai_ledger 2>/dev/null)" ]; }
+
+if [ "$MODE" = local ]; then
+  # Local mode: NONE of the commits being pushed may contain ledger files
+  # (checking only the last one would leak older unpushed commits).
+  while read -r _ local_sha remote_ref remote_sha; do
+    case "$local_sha" in *[!0]*) ;; *) continue ;; esac   # branch deletion
+    if case "$remote_sha" in *[!0]*) git cat-file -e "$remote_sha" 2>/dev/null ;; *) false ;; esac; then
+      RANGE=("$remote_sha..$local_sha")
+    else
+      RANGE=("$local_sha" --not --remotes="$1")              # new branch: commits the remote lacks
+    fi
+    LEAK=""
+    if [ -z "$(git rev-list -1 "${RANGE[@]}" -- .ai_ledger)" ]; then
+      has_ledger "$local_sha" && LEAK=$local_sha             # no commit touched it: tip tells all
+    else
+      for c in $(git rev-list "${RANGE[@]}"); do has_ledger "$c" && { LEAK=$c; break; }; done
+    fi
+    if [ -n "$LEAK" ]; then
+      if has_ledger "$local_sha"; then
+        block "Local mode is on, but the commits you are pushing contain .ai_ledger/ files." \
+              "Fix:  bash .ai_ledger/scripts/set-mode.sh local" \
+              "      git commit -m \"Make AI ledger local-only\"" \
+              "      git push"
+      fi
+      BASE=${remote_ref#refs/heads/}
+      block "Local mode is on, but older unpushed commits still contain .ai_ledger/ files" \
+            "(commit $(git rev-parse --short "$LEAK")). Pushing them would publish the ledger." \
+            "Fix: combine your unpushed commits into one that never contained the ledger:" \
+            "      git reset --soft $1/$BASE" \
+            "      git commit --no-verify -m \"Your message\"   (these changes are already logged)" \
+            "      git push"
+    fi
+  done
+  exit 0
+fi
+
+# Shared mode: the ledger is pushed, so the remote must be private. Re-checked on every push.
+VIS=$(bash .ai_ledger/scripts/visibility.sh "$REMOTE_URL" 2>/dev/null)
+case "$VIS" in
+  private) exit 0 ;;
+  public)
+    block "This repository is PUBLIC, and your AI ledger files are committed to it." \
+          "The ledger quotes your requests word for word, so anything you typed (API keys," \
+          "passwords, internal details) would be published." \
+          "" \
+          "Fix (keeps the ledger on your computer only):" \
+          "  1. bash .ai_ledger/scripts/set-mode.sh local" \
+          "  2. git commit -m \"Make AI ledger local-only\"" \
+          "  3. git push" \
+          "" \
+          "If the ledger was pushed before the repository became public, it is still in the" \
+          "history: change any keys or passwords it contains, and remove it from history with" \
+          "git filter-repo (https://github.com/newren/git-filter-repo)." ;;
+  *)
+    block "Could not confirm that this repository is private (offline, rate-limited," \
+          "or not a GitHub/GitLab repository). Your AI ledger files would be pushed." \
+          "Try again in a minute. To keep the ledger local:  bash .ai_ledger/scripts/set-mode.sh local" \
+          "Only if you are sure the repository is private:  git push --no-verify" ;;
+esac
