@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# AI Architecture Ledger: runs after every commit. Never blocks anything.
+# AI Ledger: runs after every commit. Never blocks anything.
 #  1. Local mode: remembers how many entries exist, so the next commit needs a new one,
 #     and backs up .ai_ledger/ into .git/ai-ledger-backup (survives `git clean -x`).
 #  2. Shows the newest entry's "Request vs Result", so you see what the AI did.

@@ -114,7 +114,7 @@ echo "T12 --update refreshes AI Ledger's own files, keeps the ledger and mode"; 
 echo a>app.py; git add -A; git commit --no-verify -qm base
 FAKE_VIS=private $INST >/dev/null; git add -A; git commit -qm ledger >/dev/null 2>&1
 echo "# my custom rule" >> .ai_ledger/agent_directives.md
-printf '#!/usr/bin/env bash\n# AI Architecture Ledger (old version)\nexit 0\n' > .githooks/pre-commit
+printf '#!/usr/bin/env bash\n# old ledger hook\nLEDGER=".ai_ledger/evolution_log.md"\nexit 0\n' > .githooks/pre-commit
 entry keepme
 ok "update succeeds" 'FAKE_VIS=private $INST --update'
 ok "hook replaced with current version" 'cmp -s .githooks/pre-commit "$REPO_ROOT/template/.githooks/pre-commit"'

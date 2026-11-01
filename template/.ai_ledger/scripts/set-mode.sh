@@ -31,7 +31,7 @@ has_user_content() {  # non-blank lines outside the ledger block, or unmatched m
 stage_clean() {
   local f="$1" filter="$2" mode sha
   git cat-file -e "HEAD:$f" 2>/dev/null || return 1
-  git show "HEAD:$f" | grep -qF -e '<!-- ai-ledger:start' -e '# AI Architecture Ledger:' || return 1
+  git show "HEAD:$f" | grep -qF -e '<!-- ai-ledger:start' -e '.githooks/* text eol=lf' || return 1
   [ "$(git show "HEAD:$f" | grep -c '<!-- ai-ledger:start')" = "$(git show "HEAD:$f" | grep -c '<!-- ai-ledger:end -->')" ] || return 1
   if [ -z "$(git show "HEAD:$f" | awk "$filter" | tr -d '[:space:]')" ]; then
     git rm --cached -q -- "$f"
@@ -42,7 +42,7 @@ stage_clean() {
   fi
 }
 STRIP_BLOCK='/<!-- ai-ledger:start/{s=1;next} /<!-- ai-ledger:end -->/{s=0;next} !s{l[++n]=$0} END{while(n>0 && l[n] ~ /^[[:space:]]*$/) n--; for(i=1;i<=n;i++) print l[i]}'
-STRIP_GA='index($0, "# AI Architecture Ledger:") == 1 || $0 == ".githooks/* text eol=lf" || $0 == ".ai_ledger/scripts/*.sh text eol=lf" {next} {l[++n]=$0} END{while(n>0 && l[n] ~ /^[[:space:]]*$/) n--; for(i=1;i<=n;i++) print l[i]}'
+STRIP_GA='/^# .*hook scripts must keep LF line endings/ || $0 == ".githooks/* text eol=lf" || $0 == ".ai_ledger/scripts/*.sh text eol=lf" {next} {l[++n]=$0} END{while(n>0 && l[n] ~ /^[[:space:]]*$/) n--; for(i=1;i<=n;i++) print l[i]}'
 count_entries() { cat "$LEDGER" .ai_ledger/archive/*.md 2>/dev/null | grep -cE '^## \[[0-9]{4}-' || true; }
 
 # Remove our block from the local, never-pushed ignore list (.git/info/exclude).
@@ -55,7 +55,7 @@ if [ "$MODE" = local ]; then
   # Everything that belongs to the ledger (never the user's own files).
   PATHS=(.ai_ledger .cursor/rules/ai-ledger.mdc .windsurf/rules/ai-ledger.md)
   for h in pre-commit pre-push post-commit; do
-    if grep -qs "AI Architecture Ledger" ".githooks/$h"; then PATHS+=(".githooks/$h"); fi
+    if grep -qsF ".ai_ledger" ".githooks/$h"; then PATHS+=(".githooks/$h"); fi
   done
   for f in "${TOOL_FILES[@]}"; do
     if [ -f "$f" ] && ! has_user_content "$f"; then PATHS+=("$f"); fi
@@ -65,7 +65,7 @@ if [ "$MODE" = local ]; then
     echo "# ai-ledger:end"; } >> "$EXCLUDE"
 
   # Remove the ledger's lines from the shared .gitattributes (left by shared mode).
-  if grep -qsF "# AI Architecture Ledger:" .gitattributes; then
+  if grep -qsF ".githooks/* text eol=lf" .gitattributes; then
     awk "$STRIP_GA" .gitattributes > .gitattributes.tmp
     if grep -q '[^[:space:]]' .gitattributes.tmp; then cat .gitattributes.tmp > .gitattributes; else rm -f .gitattributes; fi
     rm -f .gitattributes.tmp
@@ -135,8 +135,12 @@ else
   GA=.gitattributes   # hook scripts must keep LF line endings on Windows checkouts
   if ! grep -qsF ".githooks/* text eol=lf" "$GA"; then
     if [ -s "$GA" ]; then printf '\n' >> "$GA"; fi
-    printf '%s\n' "# AI Architecture Ledger: hook scripts must keep LF line endings" \
+    printf '%s\n' "# AI Ledger: hook scripts must keep LF line endings" \
       ".githooks/* text eol=lf" ".ai_ledger/scripts/*.sh text eol=lf" >> "$GA"
+  elif grep -qs "hook scripts must keep LF line endings" "$GA" && ! grep -qsF "# AI Ledger: hook scripts" "$GA"; then
+    # Installs from before the rename wrote this comment with the project's old name: refresh it.
+    awk '/^# .*hook scripts must keep LF line endings/ { print "# AI Ledger: hook scripts must keep LF line endings"; next } { print }' \
+      "$GA" > "$GA.tmp" && cat "$GA.tmp" > "$GA" && rm -f "$GA.tmp"
   fi
   cat <<'EOF'
 

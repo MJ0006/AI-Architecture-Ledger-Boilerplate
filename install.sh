@@ -63,8 +63,7 @@ if [ "$MODE" = shared ]; then
 fi
 
 # 3. Copy template files without overwriting anything.
-#    (Hooks are recognised by the marker text "AI Architecture Ledger", the project's original
-#    name. It stays unchanged so that older installs keep being recognised.)
+#    (Our hooks are recognised by the folder name ".ai_ledger", which every version of them contains.)
 DATE=$(date '+%Y-%m-%d %H:%M')
 (cd "$TEMPLATE" && find . -type f | sed 's|^\./||') | while IFS= read -r rel; do
   dest="$TARGET/$rel"
@@ -72,7 +71,7 @@ DATE=$(date '+%Y-%m-%d %H:%M')
     # --update: refresh AI Ledger's own files. The user's records (logs, handoff) are never replaced.
     case "$rel" in .ai_ledger/evolution_log.md|.ai_ledger/analysis_log.md|.ai_ledger/handoff.md) USER_DATA=1 ;; *) USER_DATA=0 ;; esac
     if [ "$UPDATE" = 1 ] && [ "$USER_DATA" = 0 ] && ! cmp -s "$TEMPLATE/$rel" "$dest" \
-       && { [ "${rel#.githooks/}" = "$rel" ] || grep -q "AI Architecture Ledger" "$dest"; }; then
+       && { [ "${rel#.githooks/}" = "$rel" ] || grep -qF ".ai_ledger" "$dest"; }; then
       if [ "$rel" = ".ai_ledger/agent_directives.md" ]; then
         cp "$dest" "$dest.old"
         warn "The rules were updated. Your previous rules are saved as $rel.old: if you had customized them,"
@@ -83,7 +82,7 @@ DATE=$(date '+%Y-%m-%d %H:%M')
       continue
     fi
     say "kept     $rel (already exists)"
-    if [ "${rel#.githooks/}" != "$rel" ] && ! grep -q "AI Architecture Ledger" "$dest"; then
+    if [ "${rel#.githooks/}" != "$rel" ] && ! grep -qF ".ai_ledger" "$dest"; then
       warn "Your existing $rel is not the ledger hook. Merge in the checks from"
       warn "template/$rel in the AI Ledger repo."
     fi
@@ -99,7 +98,7 @@ DATE=$(date '+%Y-%m-%d %H:%M')
 done
 chmod +x "$TARGET"/.ai_ledger/scripts/*.sh 2>/dev/null || true
 for h in pre-commit pre-push post-commit; do
-  if grep -qs "AI Architecture Ledger" "$TARGET/.githooks/$h"; then chmod +x "$TARGET/.githooks/$h"; fi
+  if grep -qsF ".ai_ledger" "$TARGET/.githooks/$h"; then chmod +x "$TARGET/.githooks/$h"; fi
 done
 
 # 4. Activate the hooks, unless another hook setup (Husky, .git/hooks) already exists.
