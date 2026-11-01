@@ -44,6 +44,16 @@ if ! TARGET=$(git -C "$TARGET_ARG" rev-parse --show-toplevel 2>/dev/null); then
 fi
 echo "Installing AI Architecture Ledger into: $TARGET"
 
+# Shared mode needs a confirmed private repo: check before changing anything.
+if [ "$MODE" = shared ]; then
+  VIS=$(cd "$TARGET" && bash "$TEMPLATE/.ai_ledger/scripts/visibility.sh")
+  if [ "$VIS" != private ]; then
+    echo "Error: --shared needs 'origin' to be a confirmed private GitHub/GitLab repository (result: $VIS)." >&2
+    echo "Nothing was changed. Run without --shared to keep the ledger on this computer." >&2
+    exit 1
+  fi
+fi
+
 # 3. Copy template files without overwriting anything.
 DATE=$(date '+%Y-%m-%d %H:%M')
 (cd "$TEMPLATE" && find . -type f | sed 's|^\./||') | while IFS= read -r rel; do
@@ -71,7 +81,8 @@ done
 
 # 4. Activate the hooks without breaking any hook setup that already exists.
 CURRENT_HOOKS=$(git -C "$TARGET" config --get core.hooksPath || true)
-OLD_HOOKS_DIR="$(git -C "$TARGET" rev-parse --path-format=absolute --git-common-dir 2>/dev/null || echo "$TARGET/.git")/hooks"
+OLD_HOOKS_DIR=$(cd "$TARGET" && git rev-parse --git-path hooks)   # .git/hooks (worktree-safe)
+case "$OLD_HOOKS_DIR" in /*|?:*) ;; *) OLD_HOOKS_DIR="$TARGET/$OLD_HOOKS_DIR" ;; esac
 HOOK_LINES='    pre-commit:   [ ! -x .githooks/pre-commit ] || .githooks/pre-commit || exit 1
     pre-push:     [ ! -x .githooks/pre-push ] || .githooks/pre-push "$@" || exit 1
     post-commit:  [ ! -x .githooks/post-commit ] || .githooks/post-commit'

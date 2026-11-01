@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # AI Architecture Ledger: runs after every commit. Never blocks anything.
-#  1. Local mode: remembers how many entries exist, so the next commit needs a new one.
+#  1. Local mode: remembers how many entries exist, so the next commit needs a new one,
+#     and backs up .ai_ledger/ into .git/ai-ledger-backup (survives `git clean -x`).
 #  2. Shows the newest entry's "Request vs Result", so you see what the AI did.
 #  3. Reminds you to run the ledger review every N days
 #     (git config ailedger.reviewDays <N>; default 14; 0 turns it off).
@@ -8,10 +9,12 @@ cd "$(git rev-parse --show-toplevel)" || exit 0
 LEDGER=.ai_ledger/evolution_log.md
 [ -f "$LEDGER" ] || exit 0
 
-# 1. Entry count baseline (local mode only).
+# 1. Entry count baseline and backup (local mode only).
 if [ "$(git config --get ailedger.mode)" = local ]; then
   cat "$LEDGER" .ai_ledger/archive/*.md 2>/dev/null \
     | grep -cE '^## \[[0-9]{4}-[0-9]{2}-[0-9]{2}' > "$(git rev-parse --git-path ai-ledger-count)"
+  BACKUP=$(git rev-parse --git-path ai-ledger-backup)
+  rm -rf "$BACKUP" && cp -R .ai_ledger "$BACKUP"
 fi
 
 # 2. Summary of the newest entry, only when this commit changed code.

@@ -10,9 +10,8 @@ modules, even if the user never mentions the ledger.
 
 ## 1. Before you change anything
 
-1. Check that the ledger hooks are on: run `git config core.hooksPath`. If it prints nothing, tell
-   the user: "The AI ledger checks are off on this computer. Run `git config core.hooksPath .githooks`
-   (or re-run the installer)." Then continue with the task.
+1. Check that the ledger hooks are on: run `bash .ai_ledger/scripts/check-setup.sh`. If it does not
+   print `OK`, show its message to the user, then continue with the task. (Skip this if you cannot run commands.)
 2. Read the most recent entries in `.ai_ledger/evolution_log.md` for project context.
 3. If the log contains entries from a previous month, run `bash .ai_ledger/scripts/archive.sh` first.
 4. If the request is ambiguous or could be read more than one way, **ask the user before writing code**.

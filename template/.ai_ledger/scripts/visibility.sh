@@ -23,7 +23,7 @@ case "$host" in
 esac
 
 command -v curl >/dev/null 2>&1 || { echo unknown; exit 0; }
-RESPONSE=$(curl -s --max-time 10 -w '\n%{http_code}' "$api" 2>/dev/null)
+RESPONSE=$(curl -sL --max-time 10 -w '\n%{http_code}' "$api" 2>/dev/null)   # -L: renamed repos redirect
 CODE=$(printf '%s' "$RESPONSE" | tail -n 1)
 BODY=$(printf '%s' "$RESPONSE" | sed '$d')
 

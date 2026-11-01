@@ -21,7 +21,28 @@ esac
 git config ailedger.mode "$MODE"
 bash "$S/sync-rules.sh"
 
-has_user_content() { [ -f "$1" ] && awk '/<!-- ai-ledger:start/{s=1;next} /<!-- ai-ledger:end -->/{s=0;next} !s && NF{f=1} END{exit !f}' "$1"; }
+has_user_content() {  # non-blank lines outside the ledger block, or unmatched markers (treat as the user's)
+  [ -f "$1" ] || return 1
+  [ "$(grep -c '<!-- ai-ledger:start' "$1")" = "$(grep -c '<!-- ai-ledger:end -->' "$1")" ] || return 0
+  awk '/<!-- ai-ledger:start/{s=1;next} /<!-- ai-ledger:end -->/{s=0;next} !s && NF{f=1} END{exit !f}' "$1"
+}
+# stage_clean <file> <awk filter>: stage the COMMITTED version with the ledger parts filtered out,
+# so the user's own unstaged edits in that file are never staged by this script.
+stage_clean() {
+  local f="$1" filter="$2" mode sha
+  git cat-file -e "HEAD:$f" 2>/dev/null || return 1
+  git show "HEAD:$f" | grep -qF -e '<!-- ai-ledger:start' -e '# AI Architecture Ledger:' || return 1
+  [ "$(git show "HEAD:$f" | grep -c '<!-- ai-ledger:start')" = "$(git show "HEAD:$f" | grep -c '<!-- ai-ledger:end -->')" ] || return 1
+  if [ -z "$(git show "HEAD:$f" | awk "$filter" | tr -d '[:space:]')" ]; then
+    git rm --cached -q -- "$f"
+  else
+    mode=$(git ls-files -s -- "$f" | awk '{print $1; exit}'); mode=${mode:-100644}
+    sha=$(git show "HEAD:$f" | awk "$filter" | git hash-object -w --stdin)
+    git update-index --cacheinfo "$mode,$sha,$f"
+  fi
+}
+STRIP_BLOCK='/<!-- ai-ledger:start/{s=1;next} /<!-- ai-ledger:end -->/{s=0;next} !s{l[++n]=$0} END{while(n>0 && l[n] ~ /^[[:space:]]*$/) n--; for(i=1;i<=n;i++) print l[i]}'
+STRIP_GA='index($0, "# AI Architecture Ledger:") == 1 || $0 == ".githooks/* text eol=lf" || $0 == ".ai_ledger/scripts/*.sh text eol=lf" {next} {l[++n]=$0} END{while(n>0 && l[n] ~ /^[[:space:]]*$/) n--; for(i=1;i<=n;i++) print l[i]}'
 count_entries() { cat "$LEDGER" .ai_ledger/archive/*.md 2>/dev/null | grep -cE '^## \[[0-9]{4}-' || true; }
 
 # Remove our block from the local, never-pushed ignore list (.git/info/exclude).
@@ -45,18 +66,25 @@ if [ "$MODE" = local ]; then
 
   # Remove the ledger's lines from the shared .gitattributes (left by shared mode).
   if grep -qsF "# AI Architecture Ledger:" .gitattributes; then
-    grep -vF -e "# AI Architecture Ledger:" -e ".githooks/* text eol=lf" -e ".ai_ledger/scripts/*.sh text eol=lf" .gitattributes > .gitattributes.tmp || true
+    awk "$STRIP_GA" .gitattributes > .gitattributes.tmp
     if grep -q '[^[:space:]]' .gitattributes.tmp; then cat .gitattributes.tmp > .gitattributes; else rm -f .gitattributes; fi
     rm -f .gitattributes.tmp
   fi
 
   # Stop tracking files that were committed earlier (they stay on disk).
   UNTRACKED=$(git rm -r --cached --ignore-unmatch -q -- "${PATHS[@]}" 2>/dev/null; git diff --cached --name-only -- "${PATHS[@]}")
-  CHANGED=$(git diff --name-only -- "${TOOL_FILES[@]}" .gitattributes)   # shared files the ledger was removed from
-  for f in $CHANGED; do git add -A -- "$f"; done                          # stage them for the next commit
+  # Stage ONLY the removal of ledger parts from shared files (the user's own edits stay unstaged).
+  CHANGED=""
+  for f in "${TOOL_FILES[@]}"; do
+    if has_user_content "$f" && stage_clean "$f" "$STRIP_BLOCK"; then CHANGED="$CHANGED $f"; fi
+  done
+  if stage_clean .gitattributes "$STRIP_GA"; then CHANGED="$CHANGED .gitattributes"; fi
 
   # Baseline for the local-mode pre-commit check: entries that already exist.
   count_entries > "$(git rev-parse --git-path ai-ledger-count)"
+  # Backup inside .git/ (never pushed, untouched by `git clean -x`). post-commit refreshes it.
+  BACKUP=$(git rev-parse --git-path ai-ledger-backup)
+  rm -rf "$BACKUP" && cp -R .ai_ledger "$BACKUP"
 
   echo ""
   echo "Mode: LOCAL. Ledger files stay on this computer. They are never committed or pushed."

@@ -41,7 +41,7 @@ fail() {
   exit 1
 }
 
-[ -f "$LEDGER" ] || fail "The ledger file $LEDGER is missing."
+[ -f "$LEDGER" ] || fail "The ledger file $LEDGER is missing. If \`git clean -x\` deleted it, restore it: mkdir -p .ai_ledger && cp -R .git/ai-ledger-backup/. .ai_ledger/"
 
 if [ "$MODE" = local ]; then
   # The ledger isn't committed, so compare against the entry count saved after the last commit.

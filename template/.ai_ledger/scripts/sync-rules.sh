@@ -14,6 +14,9 @@ BLOCK=$(mktemp); trap 'rm -f "$BLOCK"' EXIT
 { echo "$START"; cat .ai_ledger/agent_directives.md; echo "$END"; } > "$BLOCK"
 
 is_tracked() { git ls-files --error-unmatch -- "$1" >/dev/null 2>&1; }
+broken_markers() {  # start marker without end marker (or the reverse): never touch such a file
+  [ -f "$1" ] && [ "$(grep -c '<!-- ai-ledger:start' "$1")" != "$(grep -c '<!-- ai-ledger:end -->' "$1")" ]
+}
 has_user_content() {  # any non-blank line outside the ledger block?
   [ -f "$1" ] && awk '/<!-- ai-ledger:start/{s=1;next} /<!-- ai-ledger:end -->/{s=0;next} !s && NF{f=1} END{exit !f}' "$1"
 }
@@ -25,6 +28,10 @@ rewrite() {  # rewrite <file> <awk program> [awk args...]; keeps file permission
 # upsert <file> [frontmatter]: files with frontmatter belong to the ledger; others may be the user's.
 upsert() {
   local f="$1" fm="${2:-}" action=""
+  if broken_markers "$f"; then
+    echo "  ! skipped $f: its ai-ledger:start / ai-ledger:end markers don't match. Fix them by hand, then re-run."
+    return 0
+  fi
   if [ "$MODE" = local ] && [ -z "$fm" ] && is_tracked "$f" && has_user_content "$f"; then
     if grep -qF "<!-- ai-ledger:start" "$f"; then
       rewrite "$f" '/<!-- ai-ledger:start/{s=1;next} /<!-- ai-ledger:end -->/{s=0;next} !s{l[++n]=$0}
@@ -50,6 +57,9 @@ upsert() {
     action="${action:-appended}"
   fi
   echo "  $action $f"
+  if [ "$MODE" = local ] && [ -z "$fm" ] && ! is_tracked "$f" && has_user_content "$f"; then
+    echo "    note: $f holds your own content, so it isn't hidden from git. Don't commit it, or the rules get published."
+  fi
 }
 
 upsert "AGENTS.md"                         # Codex, OpenCode, Cursor, Copilot agent, Windsurf, Zed, Jules...

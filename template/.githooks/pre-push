@@ -14,14 +14,37 @@ block() {
   exit 1
 }
 
+has_ledger() { [ -n "$(git ls-tree --name-only "$1" -- .ai_ledger 2>/dev/null)" ]; }
+
 if [ "$MODE" = local ]; then
-  # Local mode: the commits being pushed must not contain ledger files.
-  while read -r _ local_sha _ _; do
+  # Local mode: NONE of the commits being pushed may contain ledger files
+  # (checking only the last one would leak older unpushed commits).
+  while read -r _ local_sha remote_ref remote_sha; do
     case "$local_sha" in *[!0]*) ;; *) continue ;; esac   # branch deletion
-    if [ -n "$(git ls-tree -r --name-only "$local_sha" -- .ai_ledger 2>/dev/null)" ]; then
-      block "Local mode is on, but the commits you are pushing contain .ai_ledger/ files." \
-            "Fix:  bash .ai_ledger/scripts/set-mode.sh local" \
-            "      git commit -m \"Make AI ledger local-only\"" \
+    if case "$remote_sha" in *[!0]*) git cat-file -e "$remote_sha" 2>/dev/null ;; *) false ;; esac; then
+      RANGE=("$remote_sha..$local_sha")
+    else
+      RANGE=("$local_sha" --not --remotes="$1")              # new branch: commits the remote lacks
+    fi
+    LEAK=""
+    if [ -z "$(git rev-list -1 "${RANGE[@]}" -- .ai_ledger)" ]; then
+      has_ledger "$local_sha" && LEAK=$local_sha             # no commit touched it: tip tells all
+    else
+      for c in $(git rev-list "${RANGE[@]}"); do has_ledger "$c" && { LEAK=$c; break; }; done
+    fi
+    if [ -n "$LEAK" ]; then
+      if has_ledger "$local_sha"; then
+        block "Local mode is on, but the commits you are pushing contain .ai_ledger/ files." \
+              "Fix:  bash .ai_ledger/scripts/set-mode.sh local" \
+              "      git commit -m \"Make AI ledger local-only\"" \
+              "      git push"
+      fi
+      BASE=${remote_ref#refs/heads/}
+      block "Local mode is on, but older unpushed commits still contain .ai_ledger/ files" \
+            "(commit $(git rev-parse --short "$LEAK")). Pushing them would publish the ledger." \
+            "Fix: combine your unpushed commits into one that never contained the ledger:" \
+            "      git reset --soft $1/$BASE" \
+            "      git commit --no-verify -m \"Your message\"   (these changes are already logged)" \
             "      git push"
     fi
   done

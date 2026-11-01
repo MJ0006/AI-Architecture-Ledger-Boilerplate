@@ -101,6 +101,7 @@ your-project/
 │   │   ├── set-mode.sh       ← switch between local and shared mode
 │   │   ├── sync-rules.sh     ← copy agent_directives.md into every AI tool's file
 │   │   ├── visibility.sh     ← asks GitHub/GitLab whether the repo is private
+│   │   ├── check-setup.sh    ← checks the hooks are active on this computer
 │   │   └── archive.sh        ← moves last month's entries to archive/
 │   └── archive/YYYY-MM.md    ← created by the archive script
 ├── .githooks/
@@ -244,8 +245,8 @@ Change the interval with `git config ailedger.reviewDays 7`, or turn the reminde
   cloned, so after cloning, each person runs `git config core.hooksPath .githooks`.
 - **Local mode:** nothing is in the repo, so each person runs the installer and keeps their own ledger.
 
-If someone forgets, the AI notices: before each task it checks `git config core.hooksPath` and tells the
-user how to switch the checks on.
+If someone forgets, the AI notices: before each task it runs `bash .ai_ledger/scripts/check-setup.sh`
+and tells the user how to switch the checks on.
 
 ## Customizing
 
@@ -253,16 +254,20 @@ user how to switch the checks on.
   `bash .ai_ledger/scripts/sync-rules.sh` to update every AI tool's file.
 - **Rename or add headings:** update them in `agent_directives.md` **and** in `REQUIRED_HEADINGS` at
   the top of `.githooks/pre-commit`. The two lists must match.
+  If you rename **Request vs Result**, also update it in `.githooks/post-commit` (used for the summary).
 
 ## Troubleshooting
 
 | Problem | Fix |
 |---|---|
-| Hook doesn't run | Run `git config core.hooksPath`. It should print `.githooks`. On macOS/Linux, also run `chmod +x .githooks/pre-commit`. |
-| `bash\r: No such file or directory` | The hook has Windows line endings. Run `rm .githooks/pre-commit && git checkout -- .githooks/pre-commit`. The `.gitattributes` rules restore LF line endings. |
+| Hooks don't run | Run `bash .ai_ledger/scripts/check-setup.sh`. It says exactly what's wrong. On macOS/Linux, `chmod +x .githooks/*` fixes permissions. |
+| `bash\r: No such file or directory` | The ledger hooks have Windows line endings. Delete them with `rm .githooks/pre-commit .githooks/pre-push .githooks/post-commit`, then run `git checkout -- .githooks` (shared mode) or re-run the installer (local mode). |
+| `git commit --amend` is blocked | Amending changes code, so it needs an entry too. Add a short entry (e.g. "Add missing file to previous commit"), or use `--no-verify` if the change is already logged. |
+| Local mode: ledger gone after `git clean -fdx` | `git clean -x` deletes ignored files, including the local ledger. Restore the copy kept in `.git/` (updated after every commit): `mkdir -p .ai_ledger && cp -R .git/ai-ledger-backup/. .ai_ledger/`, then re-run the installer to restore the hooks and tool files. |
+| Push blocked: "older unpushed commits still contain .ai_ledger/" | You switched to local mode with unpushed commits that still contain the ledger. Follow the printed steps: they combine those commits into one that never contained it. |
 | Already using Husky or Lefthook | Add the lines the installer printed to your existing `pre-commit`, `pre-push`, and `post-commit` hooks. |
 | Push blocked: "repository is PUBLIC" | Run `bash .ai_ledger/scripts/set-mode.sh local`, commit, then push. |
-| Push blocked: "could not confirm private" | You're offline or rate-limited by the GitHub API. Try again in a minute. |
+| Push blocked: "could not confirm private" | You're offline or rate-limited by the GitHub API (60 checks per hour). Try again in a minute. Pushing to a second remote that isn't on GitHub/GitLab is also blocked in shared mode. |
 | Local mode: "no new ledger entry since the last commit" | Add an entry to `evolution_log.md`. Don't `git add` it. |
 | Need to commit or push in an emergency | `--no-verify` skips the hooks. The rules forbid AI agents from using it. |
 | Merge commits | Skipped automatically. Resolving conflicts doesn't need a new entry. |
@@ -273,7 +278,8 @@ user how to switch the checks on.
 git config --unset core.hooksPath
 git config --unset ailedger.mode
 rm -rf .ai_ledger .githooks/pre-commit .githooks/pre-push .githooks/post-commit \
-       .cursor/rules/ai-ledger.mdc .windsurf/rules/ai-ledger.md
+       .cursor/rules/ai-ledger.mdc .windsurf/rules/ai-ledger.md \
+       .git/ai-ledger-backup .git/ai-ledger-count
 ```
 
 Then remove the `ai-ledger:start` … `ai-ledger:end` block from `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`,
