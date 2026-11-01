@@ -100,6 +100,9 @@ if [ "$MODE" = local ]; then
 ### Request
 > Keep the AI ledger files on this computer only.
 
+### Assumptions
+None.
+
 ### Changes
 - Stopped tracking the ledger files in git (they stay on disk) and listed them in \`.git/info/exclude\`.
 - Removed the ledger rules block from instruction files that are pushed with the code.

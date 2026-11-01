@@ -16,6 +16,9 @@ asked. Then read **Concepts** to learn the techniques it used, and **How to Veri
 ### Request
 > Install the AI Architecture Ledger boilerplate.
 
+### Assumptions
+None.
+
 ### Changes
 - Added `.ai_ledger/` with the rules, this log, a review prompt, and an archive script.
 - Added `.githooks/` hooks: `pre-commit` blocks code commits that have no complete ledger entry,

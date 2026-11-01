@@ -9,7 +9,7 @@ Read `.ai_ledger/evolution_log.md` (and any `.ai_ledger/archive/*.md` files rele
 upcoming work). Do not change any code. Produce a report with these sections:
 
 1. **Request vs Result mismatches:** list every entry where the result differed from the request.
-   Group them by cause (unclear request, missing context, technical limit, agent error). For each
+   Group them by cause (unclear request, wrong assumption, missing context, technical limit, agent error). For each
    group, give the user one concrete tip for wording future requests.
 2. **Recurring hurdles:** problems, workarounds, or files that keep coming up.
 3. **Technical debt:** shortcuts, duplicated logic, or inconsistent patterns between entries,

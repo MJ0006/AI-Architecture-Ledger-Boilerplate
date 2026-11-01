@@ -11,7 +11,7 @@
     $ErrorActionPreference = "Stop"
     $Mode = @($args | Where-Object { $_ -in @("--local", "--shared") })
     $Target = @($args | Where-Object { $_ -notlike "--*" }) + "." | Select-Object -First 1
-    $RepoUrl = if ($env:AI_LEDGER_REPO) { $env:AI_LEDGER_REPO } else { "https://github.com/MJ0006/AI-Architecture-Ledger.git" }
+    $RepoUrl = "https://github.com/MJ0006/AI-Architecture-Ledger.git"
 
     if (-not (Get-Command git -ErrorAction SilentlyContinue)) {
         throw "Git is required. Install it from https://git-scm.com/download/win and re-run."
@@ -19,13 +19,8 @@
 
     # Find Git's bash: <Git>\mingw64\libexec\git-core -> <Git>\bin\bash.exe
     $gitHome = Split-Path (Split-Path (Split-Path (git --exec-path)))
-    $bash = @("$gitHome\bin\bash.exe", "$gitHome\usr\bin\bash.exe") | Where-Object { Test-Path $_ } | Select-Object -First 1
-    # On macOS/Linux PowerShell use the system bash. Never on Windows: that could be WSL's bash,
-    # which can't read Windows paths.
-    if (-not $bash -and [Environment]::OSVersion.Platform -ne "Win32NT") {
-        $bash = (Get-Command bash -ErrorAction SilentlyContinue).Source
-    }
-    if (-not $bash) { throw "Could not find Git Bash (bash.exe). Reinstall Git for Windows." }
+    $bash = "$gitHome\bin\bash.exe"   # not plain "bash": on Windows that may be WSL's, which can't read Windows paths
+    if (-not (Test-Path $bash)) { throw "Could not find Git Bash ($bash). Reinstall Git for Windows." }
 
     $tmp = $null
     try {

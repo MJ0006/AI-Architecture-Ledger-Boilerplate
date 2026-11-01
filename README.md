@@ -167,6 +167,9 @@ hooks are switched off on your computer.
 ### Request
 > Add rate limiting to the login endpoint
 
+### Assumptions
+- One server instance, so in-memory counting is enough (asked the user: confirmed).
+
 ### Changes
 - Added a sliding-window limiter middleware (5 attempts / 15 min per IP).
 - Registered it on `POST /login` only.
@@ -188,10 +191,11 @@ In-memory sliding window: no new infrastructure, accurate at window edges, fine 
 - **Sliding window:** counts requests in the last N minutes, measured from *now*, not from the top of the hour.
 
 ### How to Verify
-Run `curl -X POST localhost:3000/login` 6 times. The 6th call returns `429 Too Many Requests`.
+Success = the 6th login attempt within 15 minutes is rejected. Run `curl -X POST localhost:3000/login`
+6 times. The 6th call returns `429 Too Many Requests`.
 ```
 
-The hook requires the `## [YYYY-MM-DD ...]` header and all seven `###` headings. It also **warns**
+The hook requires the `## [YYYY-MM-DD ...]` header and all eight `###` headings. It also **warns**
 (without blocking) about staged files the entry never mentions.
 
 ---
@@ -201,6 +205,7 @@ The hook requires the `## [YYYY-MM-DD ...]` header and all seven `###` headings.
 - **Read Request vs Result first.** It is the quickest way to see whether the AI did what you asked.
 - **When it says "Differs",** ask yourself whether the request was clear. Most mismatches come from
   missing details (which file, which behavior, what to leave alone). Write the next request with those details.
+- **Read Assumptions** to see where the AI had to guess. A guess you didn't expect means your request was missing that detail.
 - **Read Concepts** to build vocabulary. Next time you can ask for "a sliding-window limiter as
   middleware" instead of "make login safer".
 - **Read Alternatives** to see that there was a choice, so you can ask for a different approach.

@@ -10,7 +10,7 @@
 # Safe to re-run: existing files are never overwritten.
 set -euo pipefail
 
-REPO_URL="${AI_LEDGER_REPO:-https://github.com/MJ0006/AI-Architecture-Ledger.git}"
+REPO_URL="https://github.com/MJ0006/AI-Architecture-Ledger.git"
 MODE=auto
 TARGET_ARG=.
 for arg in "$@"; do
@@ -79,30 +79,19 @@ for h in pre-commit pre-push post-commit; do
   if grep -qs "AI Architecture Ledger" "$TARGET/.githooks/$h"; then chmod +x "$TARGET/.githooks/$h"; fi
 done
 
-# 4. Activate the hooks without breaking any hook setup that already exists.
-CURRENT_HOOKS=$(git -C "$TARGET" config --get core.hooksPath || true)
-OLD_HOOKS_DIR=$(cd "$TARGET" && git rev-parse --git-path hooks)   # .git/hooks (worktree-safe)
-case "$OLD_HOOKS_DIR" in /*|?:*) ;; *) OLD_HOOKS_DIR="$TARGET/$OLD_HOOKS_DIR" ;; esac
-HOOK_LINES='    pre-commit:   [ ! -x .githooks/pre-commit ] || .githooks/pre-commit || exit 1
-    pre-push:     [ ! -x .githooks/pre-push ] || .githooks/pre-push "$@" || exit 1
-    post-commit:  [ ! -x .githooks/post-commit ] || .githooks/post-commit'
-if [ "$CURRENT_HOOKS" = ".githooks" ]; then
-  say "ok       git core.hooksPath already set to .githooks"
-elif [ -n "$CURRENT_HOOKS" ]; then
-  warn "git core.hooksPath is already '$CURRENT_HOOKS' (e.g. Husky). Left unchanged."
-  warn "Add these lines to the matching hooks in $CURRENT_HOOKS/ to enable the ledger:"
-  echo "$HOOK_LINES"
-elif [ -e "$OLD_HOOKS_DIR/pre-commit" ] || [ -e "$OLD_HOOKS_DIR/pre-push" ] || [ -e "$OLD_HOOKS_DIR/post-commit" ]; then
-  warn "Existing hooks found in $OLD_HOOKS_DIR. core.hooksPath left unchanged."
-  warn "Add these lines to the matching hooks there to enable the ledger:"
-  echo "$HOOK_LINES"
-else
+# 4. Activate the hooks, unless another hook setup (Husky, .git/hooks) already exists.
+#    check-setup.sh (run at the end) prints the lines to add in that case.
+HOOKS_DIR=$(cd "$TARGET" && git rev-parse --git-path hooks)
+EXISTING=$(cd "$TARGET" && for h in pre-commit pre-push post-commit; do [ -e "$HOOKS_DIR/$h" ] && echo "$h"; done || true)
+if [ -z "$(git -C "$TARGET" config --get core.hooksPath)" ] && [ -z "$EXISTING" ]; then
   git -C "$TARGET" config core.hooksPath .githooks
   say "set      git core.hooksPath = .githooks"
 fi
 
 # 5. Choose where the ledger lives (local or shared) and write the AI tool rule files.
 (cd "$TARGET" && bash .ai_ledger/scripts/set-mode.sh "$MODE")
+echo ""
+(cd "$TARGET" && bash .ai_ledger/scripts/check-setup.sh) || true
 echo ""
 echo "Done. Work with any AI tool as usual; it logs every change to .ai_ledger/evolution_log.md."
 echo "Read the \"Request vs Result\" section of each entry to see whether the AI did what you asked."
