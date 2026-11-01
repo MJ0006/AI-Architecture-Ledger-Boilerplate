@@ -73,7 +73,8 @@ DATE=$(date '+%Y-%m-%d %H:%M')
        && { [ "${rel#.githooks/}" = "$rel" ] || grep -q "AI Architecture Ledger" "$dest"; }; then
       if [ "$rel" = ".ai_ledger/agent_directives.md" ]; then
         cp "$dest" "$dest.old"
-        warn "Your previous rules were saved as $rel.old. Re-apply any changes you had made."
+        warn "The rules were updated. Your previous rules are saved as $rel.old: if you had customized them,"
+        warn "re-apply your changes, otherwise delete that file."
       fi
       cp "$TEMPLATE/$rel" "$dest"
       say "updated  $rel"

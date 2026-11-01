@@ -12,7 +12,7 @@ All ledger files are in `.ai_ledger/` at the **repository root** (find the root 
 - `handoff.md`: where the work stands, rewritten on request (section 5).
 - `archive/`: older months (read only when you need older history).
 
-## 1. Before you change anything
+## 1. Before every task
 
 1. Check that the ledger hooks are on: run `bash .ai_ledger/scripts/check-setup.sh`. If it does not
    print `OK`, show its message to the user, then continue with the task. (Skip this if you cannot run commands.)
