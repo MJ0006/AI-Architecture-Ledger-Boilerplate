@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# AI Architecture Ledger: keeps ledger files out of public repositories.
+# AI Ledger: keeps ledger files out of public repositories.
 # Git passes $1 = remote name, $2 = remote URL, and the refs being pushed on stdin.
 REMOTE_URL="$2"
 cd "$(git rev-parse --show-toplevel)" || exit 1

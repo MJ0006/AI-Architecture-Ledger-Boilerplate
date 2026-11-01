@@ -17,7 +17,7 @@ The ledger fixes that by making the AI write down, for every task:
   pasting code you don't understand.
 - **How to Verify** steps, so you can confirm the result yourself.
 
-Over time, the log becomes the project's architecture history and a record of how your
+Over time, the log becomes the project's change history and a record of how your
 requests turn into code.
 
 ---

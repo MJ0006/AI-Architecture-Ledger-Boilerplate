@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# AI Architecture Ledger: pre-commit enforcement.
+# AI Ledger: pre-commit enforcement.
 # Blocks commits that change code without a new, complete ledger entry.
 # Required headings must match .ai_ledger/agent_directives.md.
 

@@ -1,4 +1,4 @@
-# Architecture Evolution Log
+# Evolution Log
 
 Append-only record of every change made in this repository: what was asked, what was done,
 why it was done that way, and how to check it. Rules: `.ai_ledger/agent_directives.md`.

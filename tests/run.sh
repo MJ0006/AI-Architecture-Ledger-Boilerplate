@@ -114,7 +114,7 @@ echo "T12 --update refreshes AI Ledger's own files, keeps the ledger and mode"; 
 echo a>app.py; git add -A; git commit --no-verify -qm base
 FAKE_VIS=private $INST >/dev/null; git add -A; git commit -qm ledger >/dev/null 2>&1
 echo "# my custom rule" >> .ai_ledger/agent_directives.md
-printf '#!/usr/bin/env bash\n# AI Architecture Ledger (old version)\nexit 0\n' > .githooks/pre-commit
+printf '#!/usr/bin/env bash\n# AI Ledger: pre-commit (old version)\nexit 0\n' > .githooks/pre-commit
 entry keepme
 ok "update succeeds" 'FAKE_VIS=private $INST --update'
 ok "hook replaced with current version" 'cmp -s .githooks/pre-commit "$REPO_ROOT/template/.githooks/pre-commit"'
@@ -136,6 +136,15 @@ ok "archived analysis entries don't count as code entries (commit still blocked)
 git reset -q app.py; git checkout -q app.py
 echo "my audit notes" >> .ai_ledger/analysis_log.md; echo "my handoff" > .ai_ledger/handoff.md
 ok "--update keeps the user's analysis log and handoff" '$INST --update >/dev/null && grep -q "my audit notes" .ai_ledger/analysis_log.md && grep -q "my handoff" .ai_ledger/handoff.md'
+
+echo "T14 a user's own hook and .gitattributes rules are never taken over"; newrepo t14; mkdir .githooks
+printf '#!/usr/bin/env bash\n# My team hook\nnpm run lint || exit 1\n[ -f .ai_ledger/evolution_log.md ] || exit 1\n' > .githooks/pre-commit; chmod +x .githooks/pre-commit
+$INST >/dev/null 2>&1
+ok "user hook with merged ledger checks survives --update" '$INST --update >/dev/null 2>&1; grep -q "npm run lint" .githooks/pre-commit'
+ok "user hook is not hidden from git in local mode" '! grep -qx "/.githooks/pre-commit" .git/info/exclude'
+newrepo t14b; git remote add origin https://github.com/me/app
+printf '.githooks/* text eol=lf\n*.png binary\n' > .gitattributes; git add .gitattributes; git commit --no-verify -qm base
+ok "user's own .gitattributes rule survives a local install" 'FAKE_VIS=public $INST >/dev/null 2>&1; grep -qx ".githooks/\* text eol=lf" .gitattributes && [ -z "$(git status --porcelain)" ]'
 
 echo; echo "RESULT: $PASS passed, $FAILN failed"
 [ "$FAILN" -eq 0 ]

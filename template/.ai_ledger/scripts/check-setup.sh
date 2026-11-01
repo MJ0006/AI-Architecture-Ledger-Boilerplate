@@ -12,7 +12,7 @@ for h in pre-commit pre-push post-commit; do
     PROBLEMS="$PROBLEMS\n  - .githooks/$h is missing or not executable"
   elif [ ! -x "$ACTIVE/$h" ]; then
     PROBLEMS="$PROBLEMS\n  - Git does not run a $h hook"
-  elif ! grep -qs -e "AI Architecture Ledger" -e ".githooks/$h" "$ACTIVE/$h"; then
+  elif ! grep -qsF -e ".ai_ledger" -e ".githooks/$h" "$ACTIVE/$h"; then
     PROBLEMS="$PROBLEMS\n  - $ACTIVE/$h does not call .githooks/$h"
   fi
 done
