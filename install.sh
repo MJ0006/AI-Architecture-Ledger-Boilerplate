@@ -67,8 +67,9 @@ DATE=$(date '+%Y-%m-%d %H:%M')
 (cd "$TEMPLATE" && find . -type f | sed 's|^\./||') | while IFS= read -r rel; do
   dest="$TARGET/$rel"
   if [ -e "$dest" ]; then
-    # --update: refresh the boilerplate's own files. The ledger itself is never replaced.
-    if [ "$UPDATE" = 1 ] && [ "$rel" != ".ai_ledger/evolution_log.md" ] && ! cmp -s "$TEMPLATE/$rel" "$dest" \
+    # --update: refresh the boilerplate's own files. The user's records (logs, handoff) are never replaced.
+    case "$rel" in .ai_ledger/evolution_log.md|.ai_ledger/analysis_log.md|.ai_ledger/handoff.md) USER_DATA=1 ;; *) USER_DATA=0 ;; esac
+    if [ "$UPDATE" = 1 ] && [ "$USER_DATA" = 0 ] && ! cmp -s "$TEMPLATE/$rel" "$dest" \
        && { [ "${rel#.githooks/}" = "$rel" ] || grep -q "AI Architecture Ledger" "$dest"; }; then
       if [ "$rel" = ".ai_ledger/agent_directives.md" ]; then
         cp "$dest" "$dest.old"
@@ -112,5 +113,6 @@ fi
 echo ""
 (cd "$TARGET" && bash .ai_ledger/scripts/check-setup.sh) || true
 echo ""
-echo "Done. Work with any AI tool as usual; it logs every change to .ai_ledger/evolution_log.md."
+echo "Done. Start a NEW conversation in your AI tool (or reload it) so it loads the ledger rules."
+echo "Then work as usual; it logs every change to .ai_ledger/evolution_log.md."
 echo "Read the \"Request vs Result\" section of each entry to see whether the AI did what you asked."

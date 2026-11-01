@@ -124,5 +124,18 @@ ok "ledger entries kept" 'grep -q "] keepme" .ai_ledger/evolution_log.md'
 ok "mode stays shared" '[ "$(git config ailedger.mode)" = shared ]'
 ok "AI tool files carry the new rules" 'grep -q "### Assumptions" CLAUDE.md'
 
+echo "T13 analysis log and handoff"; newrepo t13; echo a>app.py; git add -A; git commit --no-verify -qm base
+$INST >/dev/null
+ok "analysis_log.md and handoff.md installed" '[ -f .ai_ledger/analysis_log.md ] && [ -f .ai_ledger/handoff.md ]'
+ok "AI rules include the handoff triggers" 'grep -q "close the chat" CLAUDE.md && grep -q "analysis_log.md" AGENTS.md'
+ok "installer tells the user to start a new conversation" '$INST | grep -q "Start a NEW conversation"'
+printf '\n## [2026-09-10 10:00] Old UI audit\n### Request\n> audit\n### Findings\nok\n' >> .ai_ledger/analysis_log.md
+ok "archive moves old analysis entries to archive/analysis/" 'bash .ai_ledger/scripts/archive.sh | grep -q "1 entry from analysis_log.md" && [ -f .ai_ledger/archive/analysis/2026-09.md ]'
+echo b>>app.py; git add app.py
+ok "archived analysis entries don't count as code entries (commit still blocked)" '! git commit -qm x'
+git reset -q app.py; git checkout -q app.py
+echo "my audit notes" >> .ai_ledger/analysis_log.md; echo "my handoff" > .ai_ledger/handoff.md
+ok "--update keeps the user's analysis log and handoff" '$INST --update >/dev/null && grep -q "my audit notes" .ai_ledger/analysis_log.md && grep -q "my handoff" .ai_ledger/handoff.md'
+
 echo; echo "RESULT: $PASS passed, $FAILN failed"
 [ "$FAILN" -eq 0 ]
