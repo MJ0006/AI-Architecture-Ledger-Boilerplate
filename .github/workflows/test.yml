@@ -16,7 +16,7 @@ jobs:
       run:
         shell: bash
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Use macOS's built-in bash 3.2 (what Mac users have)
         if: runner.os == 'macOS'
         run: |
@@ -36,7 +36,7 @@ jobs:
       run:
         shell: ${{ matrix.shell }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Install into a new project with install.ps1
         run: |
           $proj = Join-Path $env:RUNNER_TEMP "proj"
@@ -62,7 +62,7 @@ jobs:
   visibility:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Check real public and private/missing repos
         run: |
           check() {

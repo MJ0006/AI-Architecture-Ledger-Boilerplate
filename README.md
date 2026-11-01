@@ -11,6 +11,7 @@ The ledger stays on your computer unless your repository is **confirmed private*
 The ledger fixes that by making the AI write down, for every task:
 
 - **Your request, word for word,** next to **what it changed**.
+- The **Assumptions** it made, so you see where it guessed instead of asking.
 - An honest **Request vs Result** section that says where it deviated and why.
 - **Concepts** explained in plain English, so you learn the techniques it used instead of
   pasting code you don't understand.
@@ -53,7 +54,7 @@ Add `--local` to force local-only mode, or `--shared` to require a private repos
 - Installs at your **repository root**, even if you run it from a subfolder.
 - **Never overwrites** your files. Existing files are kept, and for `CLAUDE.md`, `AGENTS.md`, and the
   other tool files it **appends** a marked block (`<!-- ai-ledger:start -->` … `<!-- ai-ledger:end -->`).
-- Is **safe to re-run.**
+- Is **safe to re-run.** (To refresh an existing install with a newer version, see [Updating](#updating).)
 - Sets `git config core.hooksPath .githooks`, unless you already use Husky or another hook
   setup. In that case it changes nothing and prints the lines to add to your existing hooks.
 - **Chooses the privacy mode** (below) and tells you which one it picked and why.
@@ -278,11 +279,14 @@ and tells the user how to switch the checks on.
 
 ## Updating
 
-When this boilerplate gets fixes, update an existing project with:
+When this boilerplate gets fixes, get the latest version, then update your project:
 
 ```bash
+git -C AI-Architecture-Ledger pull
 ./AI-Architecture-Ledger/install.sh --update path/to/your/project
 ```
+
+Or, inside your project: `curl -fsSL https://raw.githubusercontent.com/MJ0006/AI-Architecture-Ledger/main/install.sh | bash -s -- --update`
 
 It refreshes the hooks, scripts, and rules, keeps your current mode, and **never touches your ledger
 entries**. If the rules changed, your previous rules file is saved as `.ai_ledger/agent_directives.md.old`.

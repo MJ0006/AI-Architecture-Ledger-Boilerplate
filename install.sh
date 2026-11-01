@@ -56,8 +56,8 @@ fi
 if [ "$MODE" = shared ]; then
   VIS=$(cd "$TARGET" && bash "$TEMPLATE/.ai_ledger/scripts/visibility.sh")
   if [ "$VIS" != private ]; then
-    echo "Error: --shared needs 'origin' to be a confirmed private GitHub/GitLab repository (result: $VIS)." >&2
-    echo "Nothing was changed. Run without --shared to keep the ledger on this computer." >&2
+    echo "Error: shared mode needs 'origin' to be a confirmed private GitHub/GitLab repository (result: $VIS)." >&2
+    echo "Nothing was changed. Add --local to keep the ledger on this computer instead." >&2
     exit 1
   fi
 fi
