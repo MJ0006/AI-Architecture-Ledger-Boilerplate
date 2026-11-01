@@ -1,17 +1,17 @@
 #!/usr/bin/env bash
-# AI Architecture Ledger installer (macOS / Linux / Git Bash on Windows).
+# AI Ledger installer (macOS / Linux / Git Bash on Windows).
 #
 # Usage:
 #   ./install.sh [--local | --shared] [--update] [path/to/your/project]   # from a clone of this repo
-#   curl -fsSL https://raw.githubusercontent.com/MJ0006/AI-Architecture-Ledger-Boilerplate/main/install.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/MJ0006/ai-ledger/main/install.sh | bash
 #
 # Mode (default: auto): ledger files are pushed with your code ONLY if 'origin' is a
 # confirmed private GitHub/GitLab repo; otherwise they stay on this computer.
-# Safe to re-run: existing files are never overwritten, except with --update, which refreshes the
-# boilerplate's own files (hooks, scripts, rules) and never touches your ledger entries.
+# Safe to re-run: existing files are never overwritten, except with --update, which refreshes
+# AI Ledger's own files (hooks, scripts, rules) and never touches your ledger entries.
 set -euo pipefail
 
-REPO_URL="https://github.com/MJ0006/AI-Architecture-Ledger-Boilerplate.git"
+REPO_URL="https://github.com/MJ0006/ai-ledger.git"
 MODE=auto
 UPDATE=0
 TARGET_ARG=.
@@ -45,7 +45,7 @@ if ! TARGET=$(git -C "$TARGET_ARG" rev-parse --show-toplevel 2>/dev/null); then
   echo "Error: '$TARGET_ARG' is not inside a git repository. Run 'git init' there first." >&2
   exit 1
 fi
-echo "Installing AI Architecture Ledger into: $TARGET"
+echo "Installing AI Ledger into: $TARGET"
 
 # An update keeps the current mode unless --local / --shared was given.
 if [ "$UPDATE" = 1 ] && [ "$MODE" = auto ]; then
@@ -63,11 +63,13 @@ if [ "$MODE" = shared ]; then
 fi
 
 # 3. Copy template files without overwriting anything.
+#    (Hooks are recognised by the marker text "AI Architecture Ledger", the project's original
+#    name. It stays unchanged so that older installs keep being recognised.)
 DATE=$(date '+%Y-%m-%d %H:%M')
 (cd "$TEMPLATE" && find . -type f | sed 's|^\./||') | while IFS= read -r rel; do
   dest="$TARGET/$rel"
   if [ -e "$dest" ]; then
-    # --update: refresh the boilerplate's own files. The user's records (logs, handoff) are never replaced.
+    # --update: refresh AI Ledger's own files. The user's records (logs, handoff) are never replaced.
     case "$rel" in .ai_ledger/evolution_log.md|.ai_ledger/analysis_log.md|.ai_ledger/handoff.md) USER_DATA=1 ;; *) USER_DATA=0 ;; esac
     if [ "$UPDATE" = 1 ] && [ "$USER_DATA" = 0 ] && ! cmp -s "$TEMPLATE/$rel" "$dest" \
        && { [ "${rel#.githooks/}" = "$rel" ] || grep -q "AI Architecture Ledger" "$dest"; }; then
@@ -83,7 +85,7 @@ DATE=$(date '+%Y-%m-%d %H:%M')
     say "kept     $rel (already exists)"
     if [ "${rel#.githooks/}" != "$rel" ] && ! grep -q "AI Architecture Ledger" "$dest"; then
       warn "Your existing $rel is not the ledger hook. Merge in the checks from"
-      warn "template/$rel in the AI Architecture Ledger repo."
+      warn "template/$rel in the AI Ledger repo."
     fi
     continue
   fi

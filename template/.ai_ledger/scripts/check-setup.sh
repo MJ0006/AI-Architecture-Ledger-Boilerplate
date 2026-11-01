@@ -31,5 +31,5 @@ if [ -n "$(git config --get core.hooksPath)" ] || ls "$ACTIVE"/pre-commit "$ACTI
 else
   echo "  git config core.hooksPath .githooks"
 fi
-echo "  (If .githooks/ files are missing, re-run the AI Architecture Ledger installer.)"
+echo "  (If .githooks/ files are missing, re-run the AI Ledger installer.)"
 exit 1

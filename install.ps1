@@ -1,17 +1,17 @@
-# AI Architecture Ledger installer for Windows (PowerShell).
+# AI Ledger installer for Windows (PowerShell).
 # Runs install.sh using the bash bundled with Git for Windows. Git uses that same
 # bash to run hooks, so nothing extra needs to be installed.
 #
 # Usage:
 #   .\install.ps1 [--local | --shared] [path\to\your\project]
-#   irm https://raw.githubusercontent.com/MJ0006/AI-Architecture-Ledger-Boilerplate/main/install.ps1 | iex
+#   irm https://raw.githubusercontent.com/MJ0006/ai-ledger/main/install.ps1 | iex
 #
 # Everything runs inside a script block, so settings don't leak into your session when piped to iex.
 & {
     $ErrorActionPreference = "Stop"
     $Mode = @($args | Where-Object { $_ -in @("--local", "--shared") })
     $Target = @($args | Where-Object { $_ -notlike "--*" }) + "." | Select-Object -First 1
-    $RepoUrl = "https://github.com/MJ0006/AI-Architecture-Ledger-Boilerplate.git"
+    $RepoUrl = "https://github.com/MJ0006/ai-ledger.git"
 
     if (-not (Get-Command git -ErrorAction SilentlyContinue)) {
         throw "Git is required. Install it from https://git-scm.com/download/win and re-run."

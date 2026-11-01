@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# End-to-end tests for the AI Architecture Ledger boilerplate.
+# End-to-end tests for AI Ledger.
 # Each test installs into a throwaway git repo and checks real git behaviour.
 # GitHub/GitLab answers are simulated with a stub `curl` (FAKE_VIS=public|private|offline);
 # the real API check runs separately in CI.
@@ -110,7 +110,7 @@ echo "T11 amend is blocked (documented)"; cd $(mktemp -d) && git init -q && git 
 echo a>f; git add f; entry e; git commit -qm one >/dev/null; echo b>g; git add g
 ok "amend without entry is blocked" '! git commit -q --amend --no-edit'
 
-echo "T12 --update refreshes boilerplate files, keeps the ledger and mode"; newrepo t12; git remote add origin https://github.com/me/app
+echo "T12 --update refreshes AI Ledger's own files, keeps the ledger and mode"; newrepo t12; git remote add origin https://github.com/me/app
 echo a>app.py; git add -A; git commit --no-verify -qm base
 FAKE_VIS=private $INST >/dev/null; git add -A; git commit -qm ledger >/dev/null 2>&1
 echo "# my custom rule" >> .ai_ledger/agent_directives.md

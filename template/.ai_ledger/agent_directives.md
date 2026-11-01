@@ -1,6 +1,6 @@
-# AI Architecture Ledger: Mandatory Workspace Rules
+# AI Ledger: Mandatory Workspace Rules
 
-This repository keeps a self-documenting **Architecture Ledger**. These rules apply to
+This repository keeps a self-documenting **AI Ledger**. These rules apply to
 every AI agent and every folder in this repository, including subfolders, packages, and
 modules, even if the user never mentions the ledger.
 
