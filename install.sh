@@ -2,20 +2,23 @@
 # AI Architecture Ledger installer (macOS / Linux / Git Bash on Windows).
 #
 # Usage:
-#   ./install.sh [--local | --shared] [path/to/your/project]   # from a clone of this repo
+#   ./install.sh [--local | --shared] [--update] [path/to/your/project]   # from a clone of this repo
 #   curl -fsSL https://raw.githubusercontent.com/MJ0006/AI-Architecture-Ledger/main/install.sh | bash
 #
 # Mode (default: auto): ledger files are pushed with your code ONLY if 'origin' is a
 # confirmed private GitHub/GitLab repo; otherwise they stay on this computer.
-# Safe to re-run: existing files are never overwritten.
+# Safe to re-run: existing files are never overwritten, except with --update, which refreshes the
+# boilerplate's own files (hooks, scripts, rules) and never touches your ledger entries.
 set -euo pipefail
 
 REPO_URL="https://github.com/MJ0006/AI-Architecture-Ledger.git"
 MODE=auto
+UPDATE=0
 TARGET_ARG=.
 for arg in "$@"; do
   case "$arg" in
-    -h|--help) sed -n '2,10p' "$0"; exit 0 ;;
+    -h|--help) sed -n '2,11p' "$0"; exit 0 ;;
+    --update)  UPDATE=1 ;;
     --local)   MODE=local ;;
     --shared)  MODE=shared ;;
     *)         TARGET_ARG="$arg" ;;
@@ -44,6 +47,11 @@ if ! TARGET=$(git -C "$TARGET_ARG" rev-parse --show-toplevel 2>/dev/null); then
 fi
 echo "Installing AI Architecture Ledger into: $TARGET"
 
+# An update keeps the current mode unless --local / --shared was given.
+if [ "$UPDATE" = 1 ] && [ "$MODE" = auto ]; then
+  MODE=$(git -C "$TARGET" config --get ailedger.mode || echo auto)
+fi
+
 # Shared mode needs a confirmed private repo: check before changing anything.
 if [ "$MODE" = shared ]; then
   VIS=$(cd "$TARGET" && bash "$TEMPLATE/.ai_ledger/scripts/visibility.sh")
@@ -59,6 +67,17 @@ DATE=$(date '+%Y-%m-%d %H:%M')
 (cd "$TEMPLATE" && find . -type f | sed 's|^\./||') | while IFS= read -r rel; do
   dest="$TARGET/$rel"
   if [ -e "$dest" ]; then
+    # --update: refresh the boilerplate's own files. The ledger itself is never replaced.
+    if [ "$UPDATE" = 1 ] && [ "$rel" != ".ai_ledger/evolution_log.md" ] && ! cmp -s "$TEMPLATE/$rel" "$dest" \
+       && { [ "${rel#.githooks/}" = "$rel" ] || grep -q "AI Architecture Ledger" "$dest"; }; then
+      if [ "$rel" = ".ai_ledger/agent_directives.md" ]; then
+        cp "$dest" "$dest.old"
+        warn "Your previous rules were saved as $rel.old. Re-apply any changes you had made."
+      fi
+      cp "$TEMPLATE/$rel" "$dest"
+      say "updated  $rel"
+      continue
+    fi
     say "kept     $rel (already exists)"
     if [ "${rel#.githooks/}" != "$rel" ] && ! grep -q "AI Architecture Ledger" "$dest"; then
       warn "Your existing $rel is not the ledger hook. Merge in the checks from"

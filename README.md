@@ -276,6 +276,18 @@ and tells the user how to switch the checks on.
 | Need to commit or push in an emergency | `--no-verify` skips the hooks. The rules forbid AI agents from using it. |
 | Merge commits | Skipped automatically. Resolving conflicts doesn't need a new entry. |
 
+## Updating
+
+When this boilerplate gets fixes, update an existing project with:
+
+```bash
+./AI-Architecture-Ledger/install.sh --update path/to/your/project
+```
+
+It refreshes the hooks, scripts, and rules, keeps your current mode, and **never touches your ledger
+entries**. If the rules changed, your previous rules file is saved as `.ai_ledger/agent_directives.md.old`.
+Re-apply any changes you had made, then delete that file.
+
 ## Uninstall
 
 ```bash
@@ -295,4 +307,11 @@ Then remove the `ai-ledger:start` … `ai-ledger:end` block from `AGENTS.md`, `C
 install.sh     installer (macOS / Linux / Git Bash)
 install.ps1    Windows wrapper (runs install.sh with Git for Windows' bash)
 template/      the files copied into your project
+tests/run.sh   end-to-end tests: bash tests/run.sh
+.github/       CI: runs the tests on Linux, macOS, and Windows, plus the real GitHub/GitLab check
+LICENSE        MIT
 ```
+
+## License
+
+[MIT](LICENSE): free to use, copy, and modify, including commercially.
