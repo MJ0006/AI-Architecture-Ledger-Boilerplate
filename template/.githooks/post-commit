@@ -3,8 +3,7 @@
 #  1. Local mode: remembers how many entries exist, so the next commit needs a new one,
 #     and backs up .ai_ledger/ into .git/ai-ledger-backup (survives `git clean -x`).
 #  2. Shows the newest entry's "Request vs Result", so you see what the AI did.
-#  3. Reminds you to run the ledger review every N days
-#     (git config ailedger.reviewDays <N>; default 14; 0 turns it off).
+#  3. Reminds you to run the ledger review when the last one was 14+ days ago.
 cd "$(git rev-parse --show-toplevel)" || exit 0
 LEDGER=.ai_ledger/evolution_log.md
 [ -f "$LEDGER" ] || exit 0
@@ -32,16 +31,14 @@ if git diff-tree --root --no-commit-id --name-only -r HEAD | grep -qv '^\.ai_led
 fi
 
 # 3. Review reminder. .ai_ledger/last_review holds the time of the last review (seconds since 1970).
-DAYS=$(git config --get ailedger.reviewDays || echo 14)
-case "$DAYS" in ''|*[!0-9]*) DAYS=14 ;; esac
 STAMP=.ai_ledger/last_review
 NOW=$(date +%s)
 LAST=$(head -n 1 "$STAMP" 2>/dev/null | tr -dc '0-9')
 if [ -z "$LAST" ]; then
   echo "$NOW" > "$STAMP"   # first run: start the clock
-elif [ "$DAYS" -gt 0 ]; then
+else
   AGE=$(( (NOW - LAST) / 86400 ))
-  if [ "$AGE" -ge "$DAYS" ]; then
+  if [ "$AGE" -ge 14 ]; then
     echo "Reminder: your last ledger review was $AGE days ago. Ask your AI:"
     echo "    \"Follow .ai_ledger/review_prompt.md\""
   fi

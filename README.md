@@ -240,7 +240,6 @@ Before a new sprint or feature, tell your AI:
 
 You don't need to remember to do this. After a commit, if your last review was **14 or more days ago**, the terminal
 reminds you. Finishing the review resets the timer (the prompt runs `date +%s > .ai_ledger/last_review`).
-Change the interval with `git config ailedger.reviewDays 7`, or turn the reminder off with `0`.
 
 ---
 
