@@ -1,0 +1,53 @@
+#!/usr/bin/env bash
+# AI Architecture Ledger: keeps ledger files out of public repositories.
+# Git passes $1 = remote name, $2 = remote URL, and the refs being pushed on stdin.
+REMOTE_URL="$2"
+cd "$(git rev-parse --show-toplevel)" || exit 1
+MODE=$(git config --get ailedger.mode || echo shared)
+
+block() {
+  echo "================================================================"
+  echo "GIT PUSH BLOCKED: AI ARCHITECTURE LEDGER PRIVACY PROTECTION"
+  echo "================================================================"
+  printf '%s\n' "$@"
+  echo "================================================================"
+  exit 1
+}
+
+if [ "$MODE" = local ]; then
+  # Local mode: the commits being pushed must not contain ledger files.
+  while read -r _ local_sha _ _; do
+    case "$local_sha" in *[!0]*) ;; *) continue ;; esac   # branch deletion
+    if [ -n "$(git ls-tree -r --name-only "$local_sha" -- .ai_ledger 2>/dev/null)" ]; then
+      block "Local mode is on, but the commits you are pushing contain .ai_ledger/ files." \
+            "Fix:  bash .ai_ledger/scripts/set-mode.sh local" \
+            "      git commit -m \"Make AI ledger local-only\"" \
+            "      git push"
+    fi
+  done
+  exit 0
+fi
+
+# Shared mode: the ledger is pushed, so the remote must be private. Re-checked on every push.
+VIS=$(bash .ai_ledger/scripts/visibility.sh "$REMOTE_URL" 2>/dev/null)
+case "$VIS" in
+  private) exit 0 ;;
+  public)
+    block "This repository is PUBLIC, and your AI ledger files are committed to it." \
+          "The ledger quotes your requests word for word, so anything you typed (API keys," \
+          "passwords, internal details) would be published." \
+          "" \
+          "Fix (keeps the ledger on your computer only):" \
+          "  1. bash .ai_ledger/scripts/set-mode.sh local" \
+          "  2. git commit -m \"Make AI ledger local-only\"" \
+          "  3. git push" \
+          "" \
+          "If the ledger was pushed before the repository became public, it is still in the" \
+          "history: change any keys or passwords it contains, and remove it from history with" \
+          "git filter-repo (https://github.com/newren/git-filter-repo)." ;;
+  *)
+    block "Could not confirm that this repository is private (offline, rate-limited," \
+          "or not a GitHub/GitLab repository). Your AI ledger files would be pushed." \
+          "Try again in a minute. To keep the ledger local:  bash .ai_ledger/scripts/set-mode.sh local" \
+          "Only if you are sure the repository is private:  git push --no-verify" ;;
+esac

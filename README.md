@@ -3,6 +3,7 @@
 A drop-in boilerplate that makes **any AI coding tool** document every change it makes:
 **what you asked**, **what it actually did**, **why**, **what else it could have done**, and
 **how to check it**. A Git hook enforces the rule, so no tool or person can skip it.
+The ledger stays on your computer unless your repository is **confirmed private** (see [Privacy](#privacy-what-gets-uploaded)).
 
 ## Why this exists
 
@@ -44,17 +45,48 @@ curl -fsSL https://raw.githubusercontent.com/MJ0006/AI-Architecture-Ledger/main/
 irm https://raw.githubusercontent.com/MJ0006/AI-Architecture-Ledger/main/install.ps1 | iex
 ```
 
-Then commit the new files: `git add -A && git commit -m "Add AI Architecture Ledger"`.
+Add `--local` to force local-only mode, or `--shared` to require a private repository (for example
+`./install.sh --local path/to/project`). With the one-liner, use `| bash -s -- --local`.
 
 ### What the installer does
 
 - Installs at your **repository root**, even if you run it from a subfolder.
 - **Never overwrites** your files. Existing files are kept, and for `CLAUDE.md`, `AGENTS.md`, and the
   other tool files it **appends** a marked block (`<!-- ai-ledger:start -->` … `<!-- ai-ledger:end -->`).
-- Is **safe to re-run.** Re-running refreshes only those marked blocks.
+- Is **safe to re-run.**
 - Sets `git config core.hooksPath .githooks`, unless you already use Husky or another hook
-  setup. In that case it changes nothing and prints the one line to add to your existing hook.
-- Adds `.gitattributes` rules so the hook scripts keep LF line endings on Windows.
+  setup. In that case it changes nothing and prints the lines to add to your existing hooks.
+- **Chooses the privacy mode** (below) and tells you which one it picked and why.
+
+## Privacy: what gets uploaded
+
+The ledger quotes your requests **word for word**. If you ever type an API key, password, or internal
+detail into an AI request, it could end up in the ledger, so the ledger is treated as private.
+
+| Mode | When | What happens on `git push` |
+|---|---|---|
+| **local** (default) | The repo is public, has no remote, is offline, or isn't on GitHub/GitLab | Nothing ledger-related is uploaded. All ledger files (`.ai_ledger/`, the hooks, and `AGENTS.md`/`CLAUDE.md`/etc. created by the installer) are listed in `.git/info/exclude`, a per-computer ignore list that is never pushed. |
+| **shared** | `origin` is **confirmed private** on GitHub or GitLab | The ledger is committed and pushed so your team shares it. The installer prints a **warning**: if you ever make the repo public, the ledger (and any secrets in it) becomes public too. |
+
+**Protections:**
+- The installer asks GitHub/GitLab whether `origin` is private (no login needed). Any doubt means **local**.
+- In shared mode, the `pre-push` hook re-checks on **every push** and **blocks** it if the repository has
+  become public (or can't be confirmed private), with the steps to fix it.
+- In local mode, the `pre-push` hook blocks any push whose commits contain `.ai_ledger/` files.
+- In local mode, a tool file you already had and commit (e.g. your own `CLAUDE.md`) is **not** given the
+  rules, because that would publish them. The other tool files still carry them.
+- The rules forbid the AI from writing secrets into the ledger. It must write `[REDACTED]` instead.
+
+**Switch modes at any time:**
+
+```bash
+bash .ai_ledger/scripts/set-mode.sh local    # keep on this computer (removes ledger files from the repo)
+bash .ai_ledger/scripts/set-mode.sh shared   # share with the team: refused unless the repo is private
+```
+
+> **Before making a repository public,** run `set-mode.sh local` and commit. Copies pushed earlier are
+> still in the git history: change any keys or passwords they contain, and remove them from history
+> with [git filter-repo](https://github.com/newren/git-filter-repo).
 
 ## What gets added to your project
 
@@ -64,9 +96,16 @@ your-project/
 │   ├── agent_directives.md   ← master rules (single source of truth; edit here)
 │   ├── evolution_log.md      ← the ledger: append-only, one entry per task
 │   ├── review_prompt.md      ← prompt for the pre-sprint review loop
-│   ├── scripts/archive.sh    ← moves last month's entries to archive/
+│   ├── scripts/
+│   │   ├── set-mode.sh       ← switch between local and shared mode
+│   │   ├── sync-rules.sh     ← copy agent_directives.md into every AI tool's file
+│   │   ├── visibility.sh     ← asks GitHub/GitLab whether the repo is private
+│   │   └── archive.sh        ← moves last month's entries to archive/
 │   └── archive/YYYY-MM.md    ← created by the archive script
-├── .githooks/pre-commit      ← blocks commits without a complete ledger entry
+├── .githooks/
+│   ├── pre-commit            ← blocks commits without a complete ledger entry
+│   ├── pre-push              ← keeps the ledger out of public repositories
+│   └── post-commit           ← (local mode) remembers the entry count at each commit
 ├── AGENTS.md                         ┐
 ├── CLAUDE.md                         │
 ├── GEMINI.md                         │ rules copied from agent_directives.md
@@ -99,6 +138,7 @@ instructions. The Git hook enforces the rules regardless of which tool wrote the
 3. It makes the change, then appends an entry to `.ai_ledger/evolution_log.md`.
 4. When you (or the AI) run `git commit`, the hook checks that code changes come with a **new,
    complete** entry. If they don't, the commit is blocked with a message that tells you (or the AI) exactly what's missing.
+   In local mode, the entry is written but never staged, and the hook checks the file on disk.
 
 ### Entry format
 
@@ -180,18 +220,14 @@ Before a new sprint or feature, tell your AI:
 
 ## Teammates and fresh clones
 
-`core.hooksPath` is a local Git setting and isn't cloned. After cloning, each person runs:
-
-```bash
-git config core.hooksPath .githooks
-```
-
-Re-running the installer also does this.
+- **Shared mode:** the ledger is in the repo. `core.hooksPath` is a local Git setting and isn't
+  cloned, so after cloning, each person runs `git config core.hooksPath .githooks`.
+- **Local mode:** nothing is in the repo, so each person runs the installer and keeps their own ledger.
 
 ## Customizing
 
-- **Change the rules:** edit `.ai_ledger/agent_directives.md`, then re-run the installer to update every
-  AI tool's file.
+- **Change the rules:** edit `.ai_ledger/agent_directives.md`, then run
+  `bash .ai_ledger/scripts/sync-rules.sh` to update every AI tool's file.
 - **Rename or add headings:** update them in `agent_directives.md` **and** in `REQUIRED_HEADINGS` at
   the top of `.githooks/pre-commit`. The two lists must match.
 
@@ -201,19 +237,24 @@ Re-running the installer also does this.
 |---|---|
 | Hook doesn't run | Run `git config core.hooksPath`. It should print `.githooks`. On macOS/Linux, also run `chmod +x .githooks/pre-commit`. |
 | `bash\r: No such file or directory` | The hook has Windows line endings. Run `rm .githooks/pre-commit && git checkout -- .githooks/pre-commit`. The `.gitattributes` rules restore LF line endings. |
-| Already using Husky or Lefthook | Add `.githooks/pre-commit \|\| exit 1` to your existing pre-commit hook. |
-| Need to commit in an emergency | `git commit --no-verify` skips the hook. The rules forbid AI agents from using it. |
+| Already using Husky or Lefthook | Add the lines the installer printed to your existing `pre-commit`, `pre-push`, and `post-commit` hooks. |
+| Push blocked: "repository is PUBLIC" | Run `bash .ai_ledger/scripts/set-mode.sh local`, commit, then push. |
+| Push blocked: "could not confirm private" | You're offline or rate-limited by the GitHub API. Try again in a minute. |
+| Local mode: "no new ledger entry since the last commit" | Add an entry to `evolution_log.md`. Don't `git add` it. |
+| Need to commit or push in an emergency | `--no-verify` skips the hooks. The rules forbid AI agents from using it. |
 | Merge commits | Skipped automatically. Resolving conflicts doesn't need a new entry. |
 
 ## Uninstall
 
 ```bash
 git config --unset core.hooksPath
-rm -rf .ai_ledger .githooks/pre-commit .cursor/rules/ai-ledger.mdc .windsurf/rules/ai-ledger.md
+git config --unset ailedger.mode
+rm -rf .ai_ledger .githooks/pre-commit .githooks/pre-push .githooks/post-commit \
+       .cursor/rules/ai-ledger.mdc .windsurf/rules/ai-ledger.md
 ```
 
-Then remove the `ai-ledger:start` … `ai-ledger:end` block from `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, and
-`.github/copilot-instructions.md`, and the three ledger lines from `.gitattributes`.
+Then remove the `ai-ledger:start` … `ai-ledger:end` block from `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`,
+`.github/copilot-instructions.md`, and `.git/info/exclude`, and the three ledger lines from `.gitattributes` (shared mode only).
 
 ## This repository
 

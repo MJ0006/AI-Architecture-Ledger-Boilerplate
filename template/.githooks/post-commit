@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# AI Architecture Ledger: in local mode, remembers how many ledger entries existed
+# at this commit, so pre-commit can require a new entry for the next one.
+[ "$(git config --get ailedger.mode)" = local ] || exit 0
+cd "$(git rev-parse --show-toplevel)" || exit 0
+cat .ai_ledger/evolution_log.md .ai_ledger/archive/*.md 2>/dev/null \
+  | grep -cE '^## \[[0-9]{4}-[0-9]{2}-[0-9]{2}' > "$(git rev-parse --git-path ai-ledger-count)"
+exit 0

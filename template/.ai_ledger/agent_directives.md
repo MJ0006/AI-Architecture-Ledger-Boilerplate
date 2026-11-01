@@ -57,6 +57,8 @@ Also list anything requested but NOT done.>
 ## 4. Writing rules
 
 - **Request:** quote the user's words exactly. Do not paraphrase.
+- **Never write secrets** (API keys, passwords, tokens, connection strings, personal data) into the
+  ledger, even when quoting the request. Replace them with `[REDACTED]`.
 - **Request vs Result:** be honest. This section shows the user where their intent and your output
   diverged. Never hide a deviation.
 - **Alternatives:** list the viable alternatives only. Do NOT spend tokens explaining why they were rejected.
@@ -64,5 +66,6 @@ Also list anything requested but NOT done.>
 - Keep entries concise, technical, and tied to real file paths.
 - For trivial changes (typo, formatting), keep every heading but write `N/A` under Alternatives and Concepts.
 - The ledger is **append-only**. Never edit or delete earlier entries. Only the archive script moves them.
-- If the pre-commit hook blocks a commit, fix the ledger entry. **Never** bypass it with `--no-verify`.
+- If a ledger hook blocks a commit or push, fix the cause. **Never** bypass it with `--no-verify`.
+- If git ignores the ledger files (local mode), never `git add -f` them. They must stay on this computer.
 - At the end of your reply, give the user a one-line Request vs Result summary.

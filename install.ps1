@@ -3,10 +3,11 @@
 # bash to run hooks, so nothing extra needs to be installed.
 #
 # Usage:
-#   .\install.ps1 [path\to\your\project]
+#   .\install.ps1 [--local | --shared] [path\to\your\project]
 #   irm https://raw.githubusercontent.com/MJ0006/AI-Architecture-Ledger/main/install.ps1 | iex
 $ErrorActionPreference = "Stop"
-$Target = if ($args.Count -gt 0) { $args[0] } else { "." }
+$Mode = @($args | Where-Object { $_ -in @("--local", "--shared") })
+$Target = @($args | Where-Object { $_ -notlike "--*" }) + "." | Select-Object -First 1
 $RepoUrl = if ($env:AI_LEDGER_REPO) { $env:AI_LEDGER_REPO } else { "https://github.com/MJ0006/AI-Architecture-Ledger.git" }
 
 if (-not (Get-Command git -ErrorAction SilentlyContinue)) {
@@ -30,7 +31,7 @@ try {
         $installer = Join-Path $tmp "install.sh"
     }
     $targetPath = (Resolve-Path $Target).Path -replace '\\', '/'
-    & $bash ($installer -replace '\\', '/') $targetPath
+    & $bash ($installer -replace '\\', '/') @Mode $targetPath
     if ($LASTEXITCODE -ne 0) { throw "Installation failed (exit code $LASTEXITCODE)." }
 } finally {
     if ($tmp -and (Test-Path $tmp)) { Remove-Item -Recurse -Force $tmp }

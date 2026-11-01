@@ -1,12 +1,14 @@
 #!/usr/bin/env bash
 # AI Architecture Ledger: pre-commit enforcement.
-# Blocks commits that change code without adding a complete entry to the ledger.
+# Blocks commits that change code without a new, complete ledger entry.
 # Required headings must match .ai_ledger/agent_directives.md.
 
 ROOT=$(git rev-parse --show-toplevel) || exit 1
 cd "$ROOT" || exit 1
 LEDGER=".ai_ledger/evolution_log.md"
 REQUIRED_HEADINGS=("Request" "Changes" "Request vs Result" "Justification" "Alternatives" "Concepts" "How to Verify")
+MODE=$(git config --get ailedger.mode || echo shared)   # local = ledger is never committed
+ENTRY_RE='^## \[[0-9]{4}-[0-9]{2}-[0-9]{2}'
 
 # Merge commits only resolve existing work, so they don't need a new entry.
 if git rev-parse -q --verify MERGE_HEAD >/dev/null; then
@@ -19,15 +21,21 @@ if [ -z "$CODE_FILES" ]; then
   exit 0
 fi
 
+if [ "$MODE" = local ]; then
+  HOW="Append one new entry to the END of $LEDGER (local mode: do NOT git add it) and commit again."
+else
+  HOW="Append one new entry to the END of $LEDGER, stage it (git add $LEDGER), and commit again."
+fi
+
 fail() {
   echo "================================================================"
   echo "GIT COMMIT BLOCKED: AI ARCHITECTURE LEDGER COMPLIANCE FAILURE"
   echo "================================================================"
   echo "Reason: $1"
   echo ""
-  echo "Append one new entry to the END of $LEDGER using the format in"
-  echo ".ai_ledger/agent_directives.md, stage it (git add $LEDGER), and commit again."
-  echo "Each new entry needs a '## [YYYY-MM-DD HH:MM] Name' header and these headings:"
+  echo "$HOW"
+  echo "Use the format in .ai_ledger/agent_directives.md. Each new entry needs a"
+  echo "'## [YYYY-MM-DD HH:MM] Name' header and these headings:"
   for h in "${REQUIRED_HEADINGS[@]}"; do echo "  ### $h"; done
   echo "================================================================"
   exit 1
@@ -35,11 +43,23 @@ fail() {
 
 [ -f "$LEDGER" ] || fail "The ledger file $LEDGER is missing."
 
-# Lines added to the ledger in this commit.
-ADDED=$(git diff --cached --no-color --unified=0 -- "$LEDGER" | grep '^+' | grep -v '^+++' | cut -c2-)
-[ -n "$ADDED" ] || fail "Code changes are staged, but no ledger entry was added."
+if [ "$MODE" = local ]; then
+  # The ledger isn't committed, so compare against the entry count saved after the last commit.
+  PREV=$(cat "$(git rev-parse --git-path ai-ledger-count)" 2>/dev/null)
+  case "$PREV" in ''|*[!0-9]*) PREV=0 ;; esac
+  IN_LOG=$(grep -cE "$ENTRY_RE" "$LEDGER")
+  TOTAL=$(cat "$LEDGER" .ai_ledger/archive/*.md 2>/dev/null | grep -cE "$ENTRY_RE")
+  NEW=$((TOTAL - PREV))
+  [ "$NEW" -gt 0 ] || fail "Code changes are staged, but no new ledger entry was written since the last commit."
+  # Text of the newest $NEW entries.
+  ADDED=$(awk -v first=$((IN_LOG - NEW + 1)) '/^## \[[0-9][0-9][0-9][0-9]-/{i++} i >= first' "$LEDGER")
+else
+  # Lines added to the ledger in this commit.
+  ADDED=$(git diff --cached --no-color --unified=0 -- "$LEDGER" | grep '^+' | grep -v '^+++' | cut -c2-)
+  [ -n "$ADDED" ] || fail "Code changes are staged, but no ledger entry was added."
+fi
 
-echo "$ADDED" | grep -qE '^## \[[0-9]{4}-[0-9]{2}-[0-9]{2}' \
+echo "$ADDED" | grep -qE "$ENTRY_RE" \
   || fail "The ledger change has no new entry header like '## [2026-01-31 14:05] Feature Name'."
 
 MISSING=""
@@ -50,7 +70,6 @@ done
 
 # Soft check: warn (don't block) about staged files the new entry never mentions.
 while IFS= read -r f; do
-  case "$f" in "$LEDGER") continue ;; esac
   echo "$ADDED" | grep -qF "$f" || echo "Ledger warning: '$f' is staged but not mentioned in the new entry."
 done <<< "$CODE_FILES"
 

@@ -11,14 +11,15 @@ asked. Then read **Concepts** to learn the techniques it used, and **How to Veri
 
 ## [{{DATE}}] AI Architecture Ledger installed
 - **Area:** `/` (repository root)
-- **Files:** `.ai_ledger/`, `.githooks/pre-commit`, `.gitattributes`, `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, `.github/copilot-instructions.md`, `.cursor/rules/ai-ledger.mdc`, `.windsurf/rules/ai-ledger.md`
+- **Files:** `.ai_ledger/`, `.githooks/pre-commit`, `.githooks/pre-push`, `.githooks/post-commit`, `.gitattributes`, `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, `.github/copilot-instructions.md`, `.cursor/rules/ai-ledger.mdc`, `.windsurf/rules/ai-ledger.md`
 
 ### Request
 > Install the AI Architecture Ledger boilerplate.
 
 ### Changes
 - Added `.ai_ledger/` with the rules, this log, a review prompt, and an archive script.
-- Added `.githooks/pre-commit`, which blocks code commits that have no complete ledger entry.
+- Added `.githooks/` hooks: `pre-commit` blocks code commits that have no complete ledger entry,
+  and `pre-push` keeps ledger files out of public repositories.
 - Added (or appended to) the instruction files each AI tool reads automatically.
 
 ### Request vs Result
